@@ -4,16 +4,15 @@ import requests
 import folium
 from streamlit_folium import st_folium
 import numpy as np
-import plotly.express as px
 
-st.title("🏨 서울 호텔 가격 vs 주변 관광지 분석")
+st.title("🏨 서울 호텔 + 주변 관광지 시각화")
 
 # ===============================
-# 🔑 1) API Key 코드에 직접 입력
+# 🔑 1) API Key
 # ===============================
-api_key = "f0e46463ccf90abd0defd9c79c8568e922e07a835961b1676cdb2065ecc23494"  # <-- ServiceKey 입력
+api_key = "f0e46463ccf90abd0defd9c79c8568e922e07a835961b1676cdb2065ecc23494"
 
-# 호텔 반경 관광지 검색 범위
+# 관광지 검색 반경
 radius_m = st.slider("관광지 반경 (m)", 500, 2000, 1000, step=100)
 
 # ===============================
@@ -37,15 +36,10 @@ def get_hotels(api_key):
         data = res.json()
         items = data['response']['body']['items']['item']
         df = pd.DataFrame(items)
-        
-        # 안전하게 컬럼 처리
-        for col in ['title','mapx','mapy','addr','tel']:
+        for col in ['title','mapx','mapy']:
             if col not in df.columns:
                 df[col] = None
-        
-        df = df[['title','mapx','mapy','addr','tel']].rename(
-            columns={'title':'name','mapx':'lng','mapy':'lat'}
-        )
+        df = df[['title','mapx','mapy']].rename(columns={'title':'name','mapx':'lng','mapy':'lat'})
         df['lat'] = pd.to_numeric(df['lat'], errors='coerce')
         df['lng'] = pd.to_numeric(df['lng'], errors='coerce')
         df = df.dropna(subset=['lat','lng'])
@@ -60,84 +54,81 @@ def get_hotels(api_key):
 hotels_df = get_hotels(api_key)
 
 # ===============================
-# 3) 호텔별 주변 관광지 가져오기
+# 3) 호텔 선택
+# ===============================
+hotel_names = hotels_df['name'].tolist()
+selected_hotel = st.selectbox("호텔 선택", hotel_names)
+
+hotel_info = hotels_df[hotels_df['name']==selected_hotel].iloc[0]
+
+# ===============================
+# 4) 선택한 호텔 주변 관광지 가져오기
 # ===============================
 @st.cache_data(ttl=3600)
-def get_tourist_info(api_key, hotels_df, radius_m):
-    tourist_counts = []
-    tourist_lists = []
-    for idx, hotel in hotels_df.iterrows():
-        url = "http://apis.data.go.kr/B551011/KorService2/locationBasedList2"
-        params = {
-            "ServiceKey": api_key,
-            "numOfRows": 50,
-            "pageNo": 1,
-            "MobileOS": "ETC",
-            "MobileApp": "hotel_analysis",
-            "mapX": hotel['lng'],
-            "mapY": hotel['lat'],
-            "radius": radius_m,
-            "arrange": "A",
-            "_type": "json"
-        }
-        try:
-            res = requests.get(url, params=params, timeout=10)
-            data = res.json()
-            items = data['response']['body']['items']['item']
-            if isinstance(items, list):
-                tourist_counts.append(len(items))
-                tourist_lists.append([t.get('title','') for t in items])
-            elif isinstance(items, dict):
-                tourist_counts.append(1)
-                tourist_lists.append([items.get('title','')])
-            else:
-                tourist_counts.append(0)
-                tourist_lists.append([])
-        except:
-            tourist_counts.append(0)
-            tourist_lists.append([])
-    hotels_df['tourist_count'] = tourist_counts
-    hotels_df['tourist_list'] = tourist_lists
-    return hotels_df
+def get_tourist_info(api_key, lat, lng, radius_m):
+    url = "http://apis.data.go.kr/B551011/KorService2/locationBasedList2"
+    params = {
+        "ServiceKey": api_key,
+        "numOfRows": 50,
+        "pageNo": 1,
+        "MobileOS": "ETC",
+        "MobileApp": "hotel_analysis",
+        "mapX": lng,
+        "mapY": lat,
+        "radius": radius_m,
+        "arrange": "A",
+        "_type": "json"
+    }
+    try:
+        res = requests.get(url, params=params, timeout=10)
+        data = res.json()
+        items = data['response']['body']['items']['item']
+        tourist_list = []
+        if isinstance(items, list):
+            tourist_list = [t.get('title','') for t in items]
+        elif isinstance(items, dict):
+            tourist_list = [items.get('title','')]
+        return tourist_list
+    except:
+        return []
 
-hotels_df = get_tourist_info(api_key, hotels_df, radius_m)
+tourist_list = get_tourist_info(api_key, hotel_info['lat'], hotel_info['lng'], radius_m)
 
 # ===============================
-# 4) 지도 시각화
+# 5) 지도 시각화
 # ===============================
-m = folium.Map(location=[hotels_df['lat'].mean(), hotels_df['lng'].mean()], zoom_start=12)
+m = folium.Map(location=[hotel_info['lat'], hotel_info['lng']], zoom_start=15)
 
-for idx, row in hotels_df.iterrows():
+# 호텔 마커
+folium.Marker(
+    location=[hotel_info['lat'], hotel_info['lng']],
+    popup=f"{hotel_info['name']} | 가격: {hotel_info['price']} | 별점: {hotel_info['rating']}",
+    icon=folium.Icon(color='red', icon='hotel', prefix='fa')
+).add_to(m)
+
+# 주변 관광지 마커
+for t in tourist_list:
+    # 단순히 관광지 좌표는 알 수 없으므로 hotel 위치 기준 조금씩 분산 표시
     folium.CircleMarker(
-        location=[row['lat'], row['lng']],
-        radius=5 + row['tourist_count']/2,  # 관광지 수에 비례한 버블 크기
+        location=[hotel_info['lat'] + np.random.uniform(-0.001,0.001),
+                  hotel_info['lng'] + np.random.uniform(-0.001,0.001)],
+        radius=4,
         color='blue',
         fill=True,
-        fill_opacity=0.6,
-        popup=f"""
-        <b>{row['name']}</b><br>
-        가격: {row['price']}원<br>
-        별점: {row['rating']}<br>
-        주변 관광지 수: {row['tourist_count']}<br>
-        관광지 목록: {', '.join(row['tourist_list'][:5])} {'...' if len(row['tourist_list'])>5 else ''}
-        주소: {row['addr']}<br>
-        전화: {row['tel']}
-        """
+        fill_opacity=0.7,
+        popup=t
     ).add_to(m)
 
-st.subheader("서울 호텔 지도 (버블 크기 = 주변 관광지 수)")
+st.subheader(f"{selected_hotel} 주변 관광지 지도")
 st_folium(m, width=700, height=500)
 
 # ===============================
-# 5) 가격 vs 관광지 수 산점도
+# 6) 관광지 목록 + 호텔 정보 표시
 # ===============================
-st.subheader("💹 가격 vs 주변 관광지 수")
-fig = px.scatter(hotels_df, x='tourist_count', y='price',
-                 hover_data=['name','rating','addr'], size='tourist_count', color='rating')
-st.plotly_chart(fig)
-
-# ===============================
-# 6) 데이터 테이블
-# ===============================
-st.subheader("📄 호텔 데이터")
-st.dataframe(hotels_df[['name','price','rating','tourist_count','tourist_list','addr','tel']])
+st.subheader("호텔 정보 및 주변 관광지")
+st.write(f"**호텔명:** {hotel_info['name']}")
+st.write(f"**가격:** {hotel_info['price']}원")
+st.write(f"**별점:** {hotel_info['rating']}")
+st.write(f"**주변 관광지 수:** {len(tourist_list)}")
+st.write("**주변 관광지 목록:**")
+st.write(tourist_list)
