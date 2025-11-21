@@ -1,9 +1,8 @@
 streamlit
-streamlit_pannellum
 pandas
 requests
 folium
-import st_folium
+streamlit-folium
 haversine
-plotly.express
+plotly
 numpy
