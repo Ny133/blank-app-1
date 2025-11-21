@@ -1,2 +1,9 @@
 streamlit
 streamlit_pannellum
+pandas
+requests
+folium
+import st_folium
+haversine
+plotly.express
+numpy
