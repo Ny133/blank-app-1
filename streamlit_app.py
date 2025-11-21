@@ -4,6 +4,7 @@ import requests
 import folium
 from streamlit_folium import st_folium
 import numpy as np
+import plotly.express as px
 
 st.title("🏨 서울 호텔 가격 vs 주변 관광지 분석")
 
@@ -35,13 +36,20 @@ def get_hotels(api_key):
         res = requests.get(url, params=params, timeout=10)
         data = res.json()
         items = data['response']['body']['items']['item']
-        df = pd.DataFrame(items)[['title','mapx','mapy','addr','tel']].rename(
+        df = pd.DataFrame(items)
+        
+        # 안전하게 컬럼 처리
+        for col in ['title','mapx','mapy','addr','tel']:
+            if col not in df.columns:
+                df[col] = None
+        
+        df = df[['title','mapx','mapy','addr','tel']].rename(
             columns={'title':'name','mapx':'lng','mapy':'lat'}
         )
         df['lat'] = pd.to_numeric(df['lat'], errors='coerce')
         df['lng'] = pd.to_numeric(df['lng'], errors='coerce')
         df = df.dropna(subset=['lat','lng'])
-        # 가격과 별점은 API에 없으면 임시 생성
+        # 가격과 별점 임시 생성
         df['price'] = np.random.randint(150000, 300000, size=len(df))
         df['rating'] = np.random.uniform(3.0,5.0, size=len(df)).round(1)
         return df
@@ -78,10 +86,13 @@ def get_tourist_info(api_key, hotels_df, radius_m):
             items = data['response']['body']['items']['item']
             if isinstance(items, list):
                 tourist_counts.append(len(items))
-                tourist_lists.append([t['title'] for t in items])
-            else:
+                tourist_lists.append([t.get('title','') for t in items])
+            elif isinstance(items, dict):
                 tourist_counts.append(1)
-                tourist_lists.append([items['title']])
+                tourist_lists.append([items.get('title','')])
+            else:
+                tourist_counts.append(0)
+                tourist_lists.append([])
         except:
             tourist_counts.append(0)
             tourist_lists.append([])
@@ -109,6 +120,8 @@ for idx, row in hotels_df.iterrows():
         별점: {row['rating']}<br>
         주변 관광지 수: {row['tourist_count']}<br>
         관광지 목록: {', '.join(row['tourist_list'][:5])} {'...' if len(row['tourist_list'])>5 else ''}
+        주소: {row['addr']}<br>
+        전화: {row['tel']}
         """
     ).add_to(m)
 
@@ -119,13 +132,12 @@ st_folium(m, width=700, height=500)
 # 5) 가격 vs 관광지 수 산점도
 # ===============================
 st.subheader("💹 가격 vs 주변 관광지 수")
-import plotly.express as px
 fig = px.scatter(hotels_df, x='tourist_count', y='price',
-                 hover_data=['name','rating'], size='tourist_count', color='rating')
+                 hover_data=['name','rating','addr'], size='tourist_count', color='rating')
 st.plotly_chart(fig)
 
 # ===============================
 # 6) 데이터 테이블
 # ===============================
 st.subheader("📄 호텔 데이터")
-st.dataframe(hotels_df[['name','price','rating','tourist_count','tourist_list']])
+st.dataframe(hotels_df[['name','price','rating','tourist_count','tourist_list','addr','tel']])
