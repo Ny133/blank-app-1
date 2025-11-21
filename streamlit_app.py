@@ -5,7 +5,7 @@ import folium
 from streamlit_folium import st_folium
 import numpy as np
 
-st.title("🏨 서울 호텔 + 주변 관광지 시각화")
+st.title("🏨 서울 호텔 + 주변 관광지 시각화 (빠른 로딩)")
 
 # ===============================
 # 🔑 1) API Key
@@ -31,25 +31,20 @@ def get_hotels(api_key):
         "_type": "json",
         "areaCode": 1  # 서울
     }
-    try:
-        res = requests.get(url, params=params, timeout=10)
-        data = res.json()
-        items = data['response']['body']['items']['item']
-        df = pd.DataFrame(items)
-        for col in ['title','mapx','mapy']:
-            if col not in df.columns:
-                df[col] = None
-        df = df[['title','mapx','mapy']].rename(columns={'title':'name','mapx':'lng','mapy':'lat'})
-        df['lat'] = pd.to_numeric(df['lat'], errors='coerce')
-        df['lng'] = pd.to_numeric(df['lng'], errors='coerce')
-        df = df.dropna(subset=['lat','lng'])
-        # 가격과 별점 임시 생성
-        df['price'] = np.random.randint(150000, 300000, size=len(df))
-        df['rating'] = np.random.uniform(3.0,5.0, size=len(df)).round(1)
-        return df
-    except Exception as e:
-        st.error(f"호텔 API 오류: {e}")
-        st.stop()
+    res = requests.get(url, params=params, timeout=10)
+    data = res.json()
+    items = data['response']['body']['items']['item']
+    df = pd.DataFrame(items)
+    for col in ['title','mapx','mapy']:
+        if col not in df.columns:
+            df[col] = None
+    df = df[['title','mapx','mapy']].rename(columns={'title':'name','mapx':'lng','mapy':'lat'})
+    df['lat'] = pd.to_numeric(df['lat'], errors='coerce')
+    df['lng'] = pd.to_numeric(df['lng'], errors='coerce')
+    df = df.dropna(subset=['lat','lng'])
+    df['price'] = np.random.randint(150000, 300000, size=len(df))
+    df['rating'] = np.random.uniform(3.0,5.0, size=len(df)).round(1)
+    return df
 
 hotels_df = get_hotels(api_key)
 
@@ -58,14 +53,13 @@ hotels_df = get_hotels(api_key)
 # ===============================
 hotel_names = hotels_df['name'].tolist()
 selected_hotel = st.selectbox("호텔 선택", hotel_names)
-
 hotel_info = hotels_df[hotels_df['name']==selected_hotel].iloc[0]
 
 # ===============================
-# 4) 선택한 호텔 주변 관광지 가져오기
+# 4) 선택한 호텔 주변 관광지 수 가져오기
 # ===============================
 @st.cache_data(ttl=3600)
-def get_tourist_info(api_key, lat, lng, radius_m):
+def get_tourist_count(api_key, lat, lng, radius_m):
     url = "http://apis.data.go.kr/B551011/KorService2/locationBasedList2"
     params = {
         "ServiceKey": api_key,
@@ -83,16 +77,16 @@ def get_tourist_info(api_key, lat, lng, radius_m):
         res = requests.get(url, params=params, timeout=10)
         data = res.json()
         items = data['response']['body']['items']['item']
-        tourist_list = []
         if isinstance(items, list):
-            tourist_list = [t.get('title','') for t in items]
+            return len(items)
         elif isinstance(items, dict):
-            tourist_list = [items.get('title','')]
-        return tourist_list
+            return 1
+        else:
+            return 0
     except:
-        return []
+        return 0
 
-tourist_list = get_tourist_info(api_key, hotel_info['lat'], hotel_info['lng'], radius_m)
+tourist_count = get_tourist_count(api_key, hotel_info['lat'], hotel_info['lng'], radius_m)
 
 # ===============================
 # 5) 지도 시각화
@@ -102,33 +96,29 @@ m = folium.Map(location=[hotel_info['lat'], hotel_info['lng']], zoom_start=15)
 # 호텔 마커
 folium.Marker(
     location=[hotel_info['lat'], hotel_info['lng']],
-    popup=f"{hotel_info['name']} | 가격: {hotel_info['price']} | 별점: {hotel_info['rating']}",
+    popup=f"{hotel_info['name']} | 가격: {hotel_info['price']} | 별점: {hotel_info['rating']} | 주변 관광지: {tourist_count}",
     icon=folium.Icon(color='red', icon='hotel', prefix='fa')
 ).add_to(m)
 
-# 주변 관광지 마커
-for t in tourist_list:
-    # 단순히 관광지 좌표는 알 수 없으므로 hotel 위치 기준 조금씩 분산 표시
-    folium.CircleMarker(
-        location=[hotel_info['lat'] + np.random.uniform(-0.001,0.001),
-                  hotel_info['lng'] + np.random.uniform(-0.001,0.001)],
-        radius=4,
-        color='blue',
-        fill=True,
-        fill_opacity=0.7,
-        popup=t
-    ).add_to(m)
+# 주변 관광지 수만 버블로 표현 (호텔 주변)
+folium.CircleMarker(
+    location=[hotel_info['lat'], hotel_info['lng']],
+    radius=3 + tourist_count/2,
+    color='blue',
+    fill=True,
+    fill_opacity=0.5,
+    popup=f"주변 관광지 수: {tourist_count}"
+).add_to(m)
 
+# returned_objects=[] 로 설정 → 무한 로딩 방지
 st.subheader(f"{selected_hotel} 주변 관광지 지도")
-st_folium(m, width=700, height=500)
+st_folium(m, width=700, height=500, returned_objects=[])
 
 # ===============================
-# 6) 관광지 목록 + 호텔 정보 표시
+# 6) 호텔 정보 표시
 # ===============================
-st.subheader("호텔 정보 및 주변 관광지")
+st.subheader("호텔 정보")
 st.write(f"**호텔명:** {hotel_info['name']}")
 st.write(f"**가격:** {hotel_info['price']}원")
 st.write(f"**별점:** {hotel_info['rating']}")
-st.write(f"**주변 관광지 수:** {len(tourist_list)}")
-st.write("**주변 관광지 목록:**")
-st.write(tourist_list)
+st.write(f"**주변 관광지 수:** {tourist_count}")
