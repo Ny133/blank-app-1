@@ -137,7 +137,7 @@ if page == "호텔 정보":
     st.markdown(f"""
     **호텔명:** {hotel_info['name']}  
     **지역:** {sigunguname}  
-    **평균 가격:** {hotel_info['price']:,}원  
+    **가격:** {hotel_info['price']:,}원  
     **평점:** ⭐ {hotel_info['rating']}  
     """)
     
@@ -324,9 +324,9 @@ elif page == "호텔 비교 분석":
 
     # 선택 호텔 정보 출력
     st.markdown(f"""
-**선택 호텔:** {selected_hotel_row.loc[selected_idx, 'name']}  
-**평점:** {selected_hotel_row.loc[selected_idx, 'rating']}  
+**호텔:** {selected_hotel_row.loc[selected_idx, 'name']}  
 **가격:** {selected_hotel_row.loc[selected_idx, 'price']:,}원  
+**평점:** ⭐{selected_hotel_row.loc[selected_idx, 'rating']}  
 **주변 관광지 수:** {selected_hotel_row.loc[selected_idx, 'tourist_count']}
 """)
 
@@ -337,8 +337,8 @@ elif page == "호텔 비교 분석":
     st.markdown(f"""
 **전체 호텔 평균**  
 평점: {avg_rating}  
-가격: {avg_price:,.0f}원  
 주변 관광지 수: {avg_tourist}
+가격: {avg_price:,.0f}원  
 """)
 
     # ---------------- 시각화 (영문/숫자만) ----------------
