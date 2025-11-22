@@ -79,23 +79,76 @@ tourist_df["color"] = tourist_df["type"].map(TYPE_COLORS)
 page = st.radio("페이지 선택", ["호텔 정보", "관광지 보기"], horizontal=True)
 
 # ------------------ 호텔 정보 페이지 ------------------
+def get_hotel_images(api_key, content_id):
+    """detailImage2 API로 호텔 이미지 목록 불러오기"""
+    url = "http://apis.data.go.kr/B551011/EngService2/detailImage2"
+    params = {
+        "ServiceKey": api_key,
+        "MobileOS": "ETC",
+        "MobileApp": "hotel_analysis",
+        "contentId": content_id,
+        "imageYN": "Y",
+        "_type": "json"
+    }
+    try:
+        res = requests.get(url, params=params)
+        data = res.json()
+        items = data["response"]["body"]["items"]["item"]
+        if isinstance(items, dict):
+            return [items.get("originimgurl")]
+        return [i.get("originimgurl") for i in items if i.get("originimgurl")]
+    except:
+        return []
+
 if page == "호텔 정보":
-    st.subheader("🏨 선택 호텔 정보")
-    if not tourist_df.empty:
-        type_counts = tourist_df.groupby("type_name").size()
-        counts_text = "<br>".join([f"**{name}**: {count}개" for name, count in type_counts.items()])
-    else:
-        counts_text = "주변 관광지 데이터가 없습니다."
+    st.subheader("🏨 선택 호텔 상세 정보")
+
+    # 기본 정보 출력
     st.markdown(f"""
     **호텔명:** {hotel_info['name']}  
     **주소:** {hotel_info.get('address1','')}{(' ' + hotel_info.get('address2','')) if hotel_info.get('address2') else ''}  
     **연락처:** {hotel_info.get('telephone', '정보 없음')}  
     **평균 가격:** {hotel_info['price']:,}원  
-    **평점:** {hotel_info['rating']}  
-    <br>
-    **주변 관광지 수:**<br>
-    {counts_text}
+    **평점:** ⭐ {hotel_info['rating']}  
     """, unsafe_allow_html=True)
+
+    # ------------------ 1) 호텔 이미지 갤러리 ------------------
+    st.markdown("### 📷 호텔 이미지")
+    images = get_hotel_images(api_key, hotel_info["contentid"])
+
+    if images:
+        st.image(images, width=300, caption=[f"Image {i+1}" for i in range(len(images))])
+    else:
+        st.write("이미지 정보를 불러올 수 없습니다.")
+
+    # ------------------ 2) 주변 관광지 Top5 ------------------
+    if not tourist_df.empty:
+        tourist_df["dist"] = np.sqrt(
+            (tourist_df["lat"] - hotel_info["lat"])**2 + 
+            (tourist_df["lng"] - hotel_info["lng"])**2
+        )
+        top5 = tourist_df.sort_values("dist").head(5)
+
+        st.markdown("### 🗺 주변 관광지 Top5 (가까운 순)")
+        for _, row in top5.iterrows():
+            st.write(f"- **{row['name']}** ({row['type_name']})")
+
+    # ------------------ 3) AI 호텔 소개 ------------------
+    st.markdown("### 🤖 호텔 요약 설명 (AI)")
+    hotel_summary = f"""
+    {hotel_info['name']} 호텔은 서울 내 주요 관광지와 가까운 위치에 있으며,
+    평균 가격은 {hotel_info['price']:,}원, 평점은 {hotel_info['rating']}점입니다.
+    주변 {radius_m}m 반경에는 다양한 관광지와 편의시설이 있어 여행객에게 적합한 숙소입니다.
+    """
+
+    st.info(hotel_summary)
+
+    # ------------------ 4) 예약 링크 (호텔명 기반) ------------------
+    booking_url = f"https://www.booking.com/searchresults.ko.html?ss={hotel_info['name'].replace(' ', '+')}"
+    st.markdown(f"### 🔗 예약하러 가기")
+    st.markdown(f"[👉 Booking.com에서 '{hotel_info['name']}' 검색하기]({booking_url})")
+
+
 
 # ------------------ 관광지 보기 페이지 ------------------
 elif page == "관광지 보기":
