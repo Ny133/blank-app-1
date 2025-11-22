@@ -146,9 +146,21 @@ if page == "호텔 정보":
         st.write(f"- **{row['name']}** ({row['type_name']})")
 
 
-    # 예약 링크
+       # 예약 링크 강조
     booking_url = f"https://www.booking.com/searchresults.ko.html?ss={hotel_info['name'].replace(' ', '+')}"
-    st.markdown(f"\n\n\n[👉 '{hotel_info['name']}' 예약하러 가기]({booking_url})")
+    st.markdown(f"""
+    <div style="
+        padding: 15px;
+        border: 2px solid #f1c40f;
+        background-color: #f9e79f;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+    ">
+    [👉 '{hotel_info['name']}' 예약하러 가기]({booking_url})
+    </div>
+    """, unsafe_allow_html=True)
 
 # ---------- 관광지 보기 페이지 -----------
 elif page == "관광지 보기":
