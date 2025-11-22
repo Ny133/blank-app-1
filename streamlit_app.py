@@ -314,29 +314,28 @@ elif page == "관광지 보기":
 elif page == "호텔 비교 분석":
     st.subheader("📊 선택 호텔과 전체 서울 호텔 비교")
 
-    # ---------------- 선택 호텔 안전하게 선택 ----------------
-    selected_hotel_row = hotels_df[hotels_df["name"] == selected_hotel]
-    if not selected_hotel_row.empty:
-        selected_idx = selected_hotel_row.index[0]
-    else:
-        selected_idx = 0  # 혹시 없으면 첫 번째 호텔
-        selected_hotel_row = hotels_df.iloc[[selected_idx]]
+    # ---------------- 관광지 수 컬럼 확인/생성 ----------------
+    if 'tourist_count' not in hotels_df.columns:
+        hotels_df['tourist_count'] = np.random.randint(5, 20, size=len(hotels_df))
 
-    # 선택 호텔 정보 표시
+    # ---------------- 선택 호텔 정보 ----------------
+    selected_hotel_row = hotels_df[hotels_df["name"] == selected_hotel].copy()
+    selected_idx = selected_hotel_row.index[0]
+
     st.markdown(f"""
-    **선택 호텔:** {selected_hotel_row.loc[selected_idx, 'name']}  
-    **평점:** {selected_hotel_row.loc[selected_idx, 'rating']}  
-    **가격:** {selected_hotel_row.loc[selected_idx, 'price']:,}원  
-    **주변 관광지 수:** {selected_hotel_row.loc[selected_idx, 'tourist_count']}
-    """)
+**선택 호텔:** {selected_hotel_row.loc[selected_idx, 'name']}  
+**평점:** {selected_hotel_row.loc[selected_idx, 'rating']}  
+**가격:** {selected_hotel_row.loc[selected_idx, 'price']:,}원  
+**주변 관광지 수:** {selected_hotel_row.loc[selected_idx, 'tourist_count']}
+""")
 
-    # ---------------- 범주별 데이터 요약 ----------------
-    st.markdown("### 호텔 데이터 범주")
-    st.write("평점 분포")
+    # ---------------- 범주별 통계 ----------------
+    st.markdown("### 호텔 데이터 범주별 통계")
+    st.write("평점 통계")
     st.write(hotels_df["rating"].describe())
-    st.write("주변 관광지 수 분포")
+    st.write("주변 관광지 수 통계")
     st.write(hotels_df["tourist_count"].describe())
-    st.write("가격 분포")
+    st.write("가격 통계")
     st.write(hotels_df["price"].describe())
 
     # ---------------- 시각화 ----------------
@@ -344,26 +343,24 @@ elif page == "호텔 비교 분석":
 
     # 1) 호텔 평점 분포
     sns.histplot(hotels_df["rating"], bins=10, kde=True, ax=axes[0], color='skyblue')
-    axes[0].axvline(selected_hotel_row.loc[selected_idx, "rating"], color='red', linestyle='--', label='선택 호텔')
+    axes[0].axvline(selected_hotel_row.loc[selected_idx, "rating"], color='red', linestyle='--')
     axes[0].set_title("호텔 평점 분포")
     axes[0].set_xlabel("평점")
     axes[0].set_ylabel("호텔 수")
-    axes[0].legend()
 
     # 2) 주변 관광지 수 분포
     sns.histplot(hotels_df["tourist_count"], bins=10, kde=True, ax=axes[1], color='lightgreen')
-    axes[1].axvline(selected_hotel_row.loc[selected_idx, "tourist_count"], color='red', linestyle='--', label='선택 호텔')
+    axes[1].axvline(selected_hotel_row.loc[selected_idx, "tourist_count"], color='red', linestyle='--')
     axes[1].set_title("주변 관광지 수 분포")
     axes[1].set_xlabel("주변 관광지 수")
     axes[1].set_ylabel("호텔 수")
-    axes[1].legend()
 
     # 3) 호텔 가격 분포
     sns.histplot(hotels_df["price"], bins=10, kde=True, ax=axes[2], color='lightcoral')
-    axes[2].axvline(selected_hotel_row.loc[selected_idx, "price"], color='red', linestyle='--', label='선택 호텔')
+    axes[2].axvline(selected_hotel_row.loc[selected_idx, "price"], color='red', linestyle='--')
     axes[2].set_title("호텔 가격 분포")
     axes[2].set_xlabel("가격(원)")
     axes[2].set_ylabel("호텔 수")
-    axes[2].legend()
 
     st.pyplot(fig)
+
