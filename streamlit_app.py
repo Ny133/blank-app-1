@@ -205,7 +205,7 @@ legend_html = """
     padding: 10px;
     box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
 ">
-<b>🗺 관광지 범례</b><br>
+<b>[관광지 범례]</b><br>
 """
 
 for t_type, color in TYPE_COLORS.items():
