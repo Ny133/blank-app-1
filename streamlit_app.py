@@ -5,6 +5,9 @@ import folium
 from streamlit_folium import st_folium
 import numpy as np
 from folium.plugins import BeautifyIcon
+import seaborn as sns
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
 
 st.set_page_config(layout="wide")
 st.title("🏨 서울 호텔 + 주변 관광지 시각화")
@@ -294,3 +297,47 @@ elif page == "관광지 보기":
 
     else:
         st.write("주변 관광지 데이터가 없습니다.")
+
+
+
+# ---------- 회귀 분석 페이지 ----------
+elif page == "주변 관광지수와 별점에 따른 호텔 가격":
+    st.subheader("📊 주변 관광지수와 별점에 따른 호텔 가격 분석")
+
+    # 1) 호텔별 주변 관광지 수 계산
+    tourist_count_df = tourist_df.groupby("lat").size().reset_index(name="tourist_count")
+    hotels_with_count = hotels_df.merge(
+        tourist_count_df, 
+        left_on=["lat","lng"], 
+        right_on=["lat","lat"], 
+        how="left"
+    )
+    hotels_with_count["tourist_count"] = hotels_with_count["tourist_count"].fillna(0)
+
+    # 2) 독립변수(X)와 종속변수(Y)
+    X = hotels_with_count[["tourist_count", "rating"]]
+    Y = hotels_with_count["price"]
+
+    # 3) statsmodels 회귀분석
+    X_const = sm.add_constant(X)  # 상수항 추가
+    model = sm.OLS(Y, X_const).fit()
+
+    st.markdown("### 회귀분석 결과")
+    st.text(model.summary())
+
+    # 4) 시각화 (관광지 수 vs 가격, 평점 vs 가격)
+    st.markdown("### 그래프 시각화")
+    fig, axes = plt.subplots(1, 2, figsize=(12,5))
+
+    sns.scatterplot(x="tourist_count", y="price", data=hotels_with_count, ax=axes[0])
+    axes[0].set_title("주변 관광지 수 vs 호텔 가격")
+    axes[0].set_xlabel("주변 관광지 수")
+    axes[0].set_ylabel("가격(원)")
+
+    sns.scatterplot(x="rating", y="price", data=hotels_with_count, ax=axes[1])
+    axes[1].set_title("평점 vs 호텔 가격")
+    axes[1].set_xlabel("평점")
+    axes[1].set_ylabel("가격(원)")
+
+    st.pyplot(fig)
+
