@@ -322,12 +322,23 @@ elif page == "호텔 비교 분석":
     selected_hotel_row = hotels_df[hotels_df["name"] == selected_hotel].copy()
     selected_idx = selected_hotel_row.index[0]
 
-    # 선택 호텔 정보 위에 평균만 표시
+    # 선택 호텔 정보 출력
     st.markdown(f"""
-**Selected Hotel:** {selected_hotel_row.loc[selected_idx, 'name']}  
-**Rating:** {selected_hotel_row.loc[selected_idx, 'rating']}  
-**Price:** {selected_hotel_row.loc[selected_idx, 'price']:,}  
-**Nearby Attractions:** {selected_hotel_row.loc[selected_idx, 'tourist_count']}
+**선택 호텔:** {selected_hotel_row.loc[selected_idx, 'name']}  
+**평점:** {selected_hotel_row.loc[selected_idx, 'rating']}  
+**가격:** {selected_hotel_row.loc[selected_idx, 'price']:,}원  
+**주변 관광지 수:** {selected_hotel_row.loc[selected_idx, 'tourist_count']}
+""")
+
+    # 전체 호텔 평균 값
+    avg_rating = hotels_df["rating"].mean().round(2)
+    avg_price = hotels_df["price"].mean()
+    avg_tourist = hotels_df["tourist_count"].mean().round(1)
+    st.markdown(f"""
+**전체 호텔 평균**  
+평점: {avg_rating}  
+가격: {avg_price:,.0f}원  
+주변 관광지 수: {avg_tourist}
 """)
 
     # ---------------- 시각화 (영문/숫자만) ----------------
@@ -357,10 +368,10 @@ elif page == "호텔 비교 분석":
     st.pyplot(fig)
 
     # ---------------- 범주 통계 (맨 아래) ----------------
-    st.markdown("### Overall Hotel Statistics")
-    st.write("Rating statistics:")
-    st.write(hotels_df["rating"].describe())
-    st.write("Nearby attractions statistics:")
-    st.write(hotels_df["tourist_count"].describe())
-    st.write("Price statistics:")
-    st.write(hotels_df["price"].describe())
+    st.markdown("### 전체 호텔 통계")
+    stats_df = pd.DataFrame({
+        "평점": [hotels_df["rating"].mean().round(2), hotels_df["rating"].min(), hotels_df["rating"].max()],
+        "주변 관광지 수": [hotels_df["tourist_count"].mean().round(1), hotels_df["tourist_count"].min(), hotels_df["tourist_count"].max()],
+        "가격": [int(hotels_df["price"].mean()), hotels_df["price"].min(), hotels_df["price"].max()]
+    }, index=["평균", "최소", "최대"])
+    st.table(stats_df.style.set_properties(**{"font-size":"12px"}))
