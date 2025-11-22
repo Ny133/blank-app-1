@@ -102,16 +102,16 @@ tour_df = get_tourist_list(api_key, hotel_info['lat'], hotel_info['lng'], radius
 # -----------------------------------
 st.subheader("📋 주변 관광지 목록 (분류 포함)")
 
-# Streamlit Table + 클릭 selectable
-selected_spot = st.dataframe(
+selected_spot = st.data_editor(
     tour_df,
     use_container_width=True,
     hide_index=True,
     selection_mode="single-row"
 )
 
-if selected_spot["selection"]["rows"]:
-    selected_idx = selected_spot["selection"]["rows"][0]
+selected_rows = selected_spot["selection"]["rows"]
+if selected_rows:
+    selected_idx = selected_rows[0]
     spot_info = tour_df.iloc[selected_idx]
 else:
     selected_idx = None
