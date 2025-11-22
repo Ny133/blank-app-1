@@ -134,20 +134,20 @@ for _, row in tourist_df.iterrows():
 
     else:
      # 일반 관광지 표시
-folium.Marker(
-    location=[row["lat"], row["lng"]],
-    popup=f"{row['name']} ({row['type_name']})",
-    icon=BeautifyIcon(
-        icon="circle",               # 작은 원 모양
-        icon_shape="marker",
-        border_color=row["color"],   # 원래 컬러 유지
-        text_color=row["color"],
-        background_color="white",    # 배경은 흰색
-        prefix="fa",
-        icon_size=[15, 15],          # 크기 작게
-        inner_icon_style="margin:0px;"
-    )
-).add_to(m)
+      folium.Marker(
+          location=[row["lat"], row["lng"]],
+          popup=f"{row['name']} ({row['type_name']})",
+          icon=BeautifyIcon(
+              icon="circle",               # 작은 원 모양
+              icon_shape="marker",
+              border_color=row["color"],   # 원래 컬러 유지
+              text_color=row["color"],
+              background_color="white",    # 배경은 흰색
+              prefix="fa",
+              icon_size=[15, 15],          # 크기 작게
+              inner_icon_style="margin:0px;"
+          )
+      ).add_to(m)
         
 
 
