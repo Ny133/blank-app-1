@@ -104,7 +104,7 @@ m = folium.Map(location=[hotel_info["lat"], hotel_info["lng"]], zoom_start=15)
 folium.Marker(
     location=[hotel_info["lat"], hotel_info["lng"]],
     popup=f"<b>{hotel_info['name']}</b><br>가격: {hotel_info['price']}<br>평점: {hotel_info['rating']}",
-    icon=folium.Icon(color="red", icon="star", prefix="fa")
+    icon=folium.Icon(color="red", icon="home", prefix="fa")
 ).add_to(m)
 
 from folium.plugins import BeautifyIcon
@@ -121,7 +121,7 @@ for _, row in tourist_df.iterrows():
             location=[row["lat"], row["lng"]],
             popup=f"{row['name']} ({row['type_name']})",
             icon=BeautifyIcon(
-                icon=none,
+                icon="star",
                 icon_shape="marker",   # marker 모양
                 border_color="yellow",
                 text_color="white",
