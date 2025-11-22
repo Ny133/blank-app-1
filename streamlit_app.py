@@ -148,22 +148,7 @@ for _, row in tourist_df.iterrows():
         folium.Marker(
             location=[row["lat"], row["lng"]],
             popup=f"{row['name']} ({row['type_name']})",
-            icon=BeautifyIcon(
-                icon=icon_name,
-                icon_shape="marker",
-                border_color="yellow",
-                text_color="white",
-                background_color="yellow",
-                prefix="fa",
-                icon_size=[40, 40],  # 크게
-                inner_icon_style="""
-            font-size:20px;
-            line-height:25px;
-            text-align:center;
-            vertical-align:middle;
-            margin:0px;
-        """
-    )
+            icon=folium.Icon(color='yellow', icon='star', prefix='fa')
         ).add_to(m)
     else:
        # 일반 관광지: 조금 더 크게, 원형, 아이콘 중앙 정렬
