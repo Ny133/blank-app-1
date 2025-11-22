@@ -107,23 +107,39 @@ folium.Marker(
     icon=folium.Icon(color="red", icon="star", prefix="fa")
 ).add_to(m)
 
-# 관광지 표시
 from folium.plugins import BeautifyIcon
 
-if highlight:
-    folium.Marker(
-        location=[row["lat"], row["lng"]],
-        popup=f"{row['name']} ({row['type_name']})",
-        icon=BeautifyIcon(
-            icon="star",
-            icon_shape="marker",
-            border_color="yellow",
-            text_color="yellow",
-            background_color="red",
-            number=1,
-            spin=True
-        )
-    ).add_to(m)
+# 관광지 표시
+for _, row in tourist_df.iterrows():
+    highlight = selected_spot is not None and row["name"] == selected_spot["name"]
+
+    if highlight:
+        # 선택된 관광지 강조
+        folium.Marker(
+            location=[row["lat"], row["lng"]],
+            popup=f"{row['name']} ({row['type_name']})",
+            icon=BeautifyIcon(
+                icon="star",
+                icon_shape="marker",
+                border_color="yellow",
+                text_color="yellow",
+                background_color="red",
+                number=1,
+                spin=True
+            )
+        ).add_to(m)
+    else:
+        # 일반 관광지
+        folium.CircleMarker(
+            location=[row["lat"], row["lng"]],
+            radius=5,
+            color=row["color"],
+            fill=True,
+            fill_color=row["color"],
+            fill_opacity=0.8,
+            popup=f"{row['name']} ({row['type_name']})"
+        ).add_to(m)
+
 
 
 
