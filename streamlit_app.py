@@ -8,13 +8,12 @@ import numpy as np
 st.set_page_config(layout="wide")
 st.title("🏨 서울 호텔 + 주변 관광지 시각화")
 
-api_key = "f0e46463ccf90abd0defd9c79c8568e922e07a835961b1676cdb2065ecc23494"
+api_key = "YOUR_API_KEY"
 radius_m = st.slider("관광지 반경 (m)", 500, 2000, 1000, step=100)
 
 # ------------------ 타입 컬러/이름 ------------------
 TYPE_COLORS = {75: "green", 76: "blue", 77: "gray", 78: "purple",
                79: "orange", 80: "red", 82: "pink", 85: "cadetblue"}
-
 TYPE_NAMES = {75: "레포츠", 76: "관광지", 77: "교통", 78: "문화시설",
               79: "쇼핑", 80: "숙박", 82: "음식점", 85: "축제/공연/행사"}
 
@@ -73,23 +72,16 @@ tourist_df = pd.DataFrame(tourist_list)
 tourist_df["type_name"] = tourist_df["type"].map(TYPE_NAMES)
 tourist_df["color"] = tourist_df["type"].map(TYPE_COLORS)
 
-# ------------------ 관광지 표 + 선택 ------------------
-st.subheader("📋 관광지 목록 (분류 포함)")
+# ------------------ 분류별 선택 ------------------
+st.subheader("📋 관광지 선택 (분류별)")
 
-tour_df_sorted = tourist_df.sort_values("type_name").reset_index(drop=True)
-
-selected_row = st.data_editor(
-    tour_df_sorted[["name","type_name"]],
-    use_container_width=True,
-    hide_index=True,
-    selection_mode="single-row"
-)
-
-# 선택된 관광지
 selected_spot = None
-if selected_row["selection"]["rows"]:
-    idx = selected_row["selection"]["rows"][0]
-    selected_spot = tour_df_sorted.iloc[idx]
+for t_type, group in tourist_df.groupby("type_name"):
+    st.markdown(f"### {t_type}")
+    spot_options = ["선택 안 함"] + group["name"].tolist()
+    choice = st.selectbox(f"{t_type} 선택", spot_options, key=t_type)
+    if choice != "선택 안 함":
+        selected_spot = group[group["name"]==choice].iloc[0]
 
 # ------------------ 지도 생성 ------------------
 st.subheader(f"{selected_hotel} 주변 관광지 지도")
@@ -115,7 +107,6 @@ for _, row in tourist_df.iterrows():
         popup=f"{row['name']} ({row['type_name']})"
     ).add_to(m)
 
-# 선택 관광지 중심으로 이동
 if selected_spot is not None:
     m.location = [selected_spot["lat"], selected_spot["lng"]]
     m.zoom_start = 17
