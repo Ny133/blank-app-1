@@ -203,7 +203,7 @@ elif page == "관광지 보기":
         # 호텔 마커
         folium.Marker(
             location=[hotel_info['lat'], hotel_info['lng']],
-            popup=f"{hotel_info['name']} | 가격: {hotel_info['price']} | 별점: {hotel_info['rating']}",
+            popup=f"{hotel_info['name']}",
             icon=folium.Icon(color='red', icon='hotel', prefix='fa')
         ).add_to(m)
 
