@@ -145,11 +145,11 @@ for _, row in tourist_df.iterrows():
 
     if highlight:
         # 선택 관광지: 노란색 + 크게 강조
-    folium.Marker(
-        location=[row["lat"], row["lng"]],
-        popup=f"{row['name']} ({row['type_name']})",
-        icon=folium.Icon(color='yellow', icon='star', prefix='fa')  # color='yellow' 가능
-    ).add_to(m)
+        folium.Marker(
+            location=[row["lat"], row["lng"]],
+            popup=f"{row['name']} ({row['type_name']})",
+            icon=folium.Icon(color='yellow', icon='star', prefix='fa')  # color='yellow' 가능
+        ).add_to(m)
 
     else:
        # 일반 관광지: 조금 더 크게, 원형, 아이콘 중앙 정렬
