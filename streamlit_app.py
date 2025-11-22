@@ -127,8 +127,13 @@ if page == "호텔 정보":
     
     # 관광지 타입별 수 정리
     st.markdown("### 관광지 타입별 수")
-    type_counts = tourist_df["type_name"].value_counts().rename_axis("관광지 타입").reset_index(name="개수")
+    # 관광지 타입별 개수 계산
+    type_counts = tourist_df.groupby("type_name").size().reset_index(name="개수")
+    type_counts = type_counts.rename(columns={"type_name":"관광지 타입"})
+
+    # 인덱스 없이 출력
     st.table(type_counts)
+
 
     
     # 호텔 이미지
@@ -173,11 +178,13 @@ if page == "호텔 정보":
 elif page == "관광지 보기":
     st.subheader("📍 호텔 주변 관광지 보기")
     
-    col1, col2 = st.columns([3,1])
+    col1, col2 = st.columns([3,1])  # 지도 넓게, UI 좁게
     
+    # ---------------- 지도 ----------------
     with col1:
         st.markdown("### 지도")
         m = folium.Map(location=[hotel_info["lat"], hotel_info["lng"]], zoom_start=15)
+        
         # 호텔 마커
         folium.Marker(
             location=[hotel_info['lat'], hotel_info['lng']],
@@ -185,7 +192,47 @@ elif page == "관광지 보기":
             icon=folium.Icon(color='red', icon='hotel', prefix='fa')
         ).add_to(m)
         
-        # 관광지 선택
+        # 관광지 마커
+        for _, row in tourist_df.iterrows():
+            icon_name = TYPE_ICONS.get(row["type"], "info-sign")
+            folium.Marker(
+                location=[row["lat"], row["lng"]],
+                popup=f"{row['name']} ({row['type_name']})",
+                icon=BeautifyIcon(
+                    icon=icon_name, icon_shape="circle",
+                    border_color=row["color"], text_color="white", background_color=row["color"],
+                    prefix="fa", icon_size=[20,20]
+                )
+            ).add_to(m)
+        
+        # 범례
+        legend_html = """
+        <div style="
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            width: 220px;
+            background-color: white;
+            border:2px solid grey;
+            z-index:9999;
+            font-size:16px;
+            padding: 15px;
+            box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        ">
+        <b>[관광지 범례]</b><br>
+        """
+        for t_type, color in TYPE_COLORS.items():
+            icon = TYPE_ICONS.get(t_type, "info-sign")
+            name = TYPE_NAMES.get(t_type, "")
+            legend_html += f"""<i class="fa fa-{icon}" style="color:{color}; margin-right:5px;"></i> {name} <br>"""
+        legend_html += """<i class="fa fa-hotel" style="color:red; margin-right:5px;"></i> 호텔<br></div>"""
+        m.get_root().html.add_child(folium.Element(legend_html))
+
+        st_folium(m, width=800, height=600)
+
+    # ---------------- UI ----------------
+    with col2:
+        st.markdown("### 관광지 선택")
         category_list = ["선택 안 함"] + tourist_df["type_name"].unique().tolist()
         selected_category = st.selectbox("관광지 분류 선택", category_list)
         selected_spot = None
@@ -196,30 +243,18 @@ elif page == "관광지 보기":
             if selected_name != "선택 안 함":
                 selected_spot = filtered[filtered["name"] == selected_name].iloc[0]
         
-        # 관광지 마커
-        for _, row in tourist_df.iterrows():
-            highlight = selected_spot is not None and row["name"] == selected_spot["name"]
-            icon_name = TYPE_ICONS.get(row["type"], "info-sign")
-            if highlight:
-                folium.Marker(
-                    location=[row["lat"], row["lng"]],
-                    popup=f"{row['name']} ({row['type_name']})",
-                    icon=BeautifyIcon(
-                        icon="star", icon_shape="marker",
-                        border_color="yellow", text_color="white", background_color="yellow",
-                        prefix="fa", icon_size=[30,30]
-                    )
-                ).add_to(m)
-            else:
-                folium.Marker(
-                    location=[row["lat"], row["lng"]],
-                    popup=f"{row['name']} ({row['type_name']})",
-                    icon=BeautifyIcon(
-                        icon=icon_name, icon_shape="circle",
-                        border_color=row["color"], text_color="white", background_color=row["color"],
-                        prefix="fa", icon_size=[20,20]
-                    )
-                ).add_to(m)
+        # 선택한 관광지 강조 (지도에 반영하려면 선택 정보도 folium 마커에 적용)
+        if selected_spot is not None:
+            folium.Marker(
+                location=[selected_spot["lat"], selected_spot["lng"]],
+                popup=f"{selected_spot['name']} ({selected_spot['type_name']})",
+                icon=BeautifyIcon(
+                    icon="star", icon_shape="marker",
+                    border_color="yellow", text_color="white", background_color="yellow",
+                    prefix="fa", icon_size=[30,30]
+                )
+            ).add_to(m)
+
         
         if selected_spot is not None:
             m.location = [selected_spot["lat"], selected_spot["lng"]]
