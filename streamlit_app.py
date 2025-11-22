@@ -44,62 +44,11 @@ def get_hotels(api_key):
     df["lng"] = pd.to_numeric(df["lng"], errors="coerce")
     df = df.dropna(subset=["lat","lng"])
     df["price"] = np.random.randint(150000, 300000, size=len(df))
-    df["rating"] = np.random.uniform(3.0,5.0, size=len(df)).round(1)
-    return df
-
-hotels_df = get_hotels(api_key)
-selected_hotel = st.selectbox("호텔 선택", hotels_df["name"])
-hotel_info = hotels_df[hotels_df["name"]==selected_hotel].iloc[0]
-
-# 호텔 정보 표시 + 주변 관광지 수
-st.subheader("🏨 선택 호텔 정보")
-
-# 분류별 관광지 개수 계산
-if not tourist_df.empty:
-    type_counts = tourist_df.groupby("type_name").size()
-    counts_text = "<br>".join([f"**{name}**: {count}개" for name, count in type_counts.items()])
-else:
-    counts_text = "주변 관광지 데이터가 없습니다."
-
-st.markdown(f"""
-**호텔명:** {hotel_info['name']}  
-**평균 가격:** {hotel_info['price']:,}원   
-**평점:** {hotel_info['rating']}  
-<br>
-**주변 관광지 수:**<br>
-{counts_text}
-""", unsafe_allow_html=True)
+    df["rating"] = np.random.uniform(3.0,5.0, size=len(df)).r시 ------------------
 
 
-# ------------------ 관광지 데이터 ------------------
-@st.cache_data(ttl=3600)
-def get_tourist_list(api_key, lat, lng, radius_m):
-    url = "http://apis.data.go.kr/B551011/EngService2/locationBasedList2"
-    params = {
-        "ServiceKey": api_key, "numOfRows": 200, "pageNo":1,
-        "MobileOS":"ETC","MobileApp":"hotel_analysis",
-        "mapX":lng,"mapY":lat,"radius":radius_m,"arrange":"A","_type":"json"
-    }
-    try:
-        res = requests.get(url, params=params)
-        data = res.json()
-        items = data["response"]["body"]["items"]["item"]
-        results = []
-        for t in items if isinstance(items, list) else [items]:
-            results.append({
-                "name": t.get("title",""),
-                "lat": float(t.get("mapy",0)),
-                "lng": float(t.get("mapx",0)),
-                "type": int(t.get("contenttypeid",0)),
-            })
-        return results
-    except:
-        return []
 
-tourist_list = get_tourist_list(api_key, hotel_info["lat"], hotel_info["lng"], radius_m)
-tourist_df = pd.DataFrame(tourist_list)
-tourist_df["type_name"] = tourist_df["type"].map(TYPE_NAMES)
-tourist_df["color"] = tourist_df["type"].map(TYPE_COLORS)
+
 
 # ------------------ 관광지 분류 선택 ------------------
 st.subheader("📋 관광지 분류 선택")
