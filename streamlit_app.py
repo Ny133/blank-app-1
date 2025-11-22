@@ -114,7 +114,13 @@ folium.Marker(
         background_color="red",
         prefix="fa",
         icon_size=[40, 40],
-        inner_icon_style="margin:0px;"
+        inner_icon_style="""
+            font-size:12px;
+            line-height:25px;
+            text-align:center;
+            vertical-align:middle;
+            margin:0px;
+        """
     )
 ).add_to(m)
 
@@ -155,8 +161,14 @@ for _, row in tourist_df.iterrows():
                 background_color="yellow",
                 prefix="fa",
                 icon_size=[40, 40],  # 크게
-                inner_icon_style="margin:0px;"
-            )
+                inner_icon_style="""
+            font-size:12px;
+            line-height:25px;
+            text-align:center;
+            vertical-align:middle;
+            margin:0px;
+        """
+    )
         ).add_to(m)
     else:
         # 일반 관광지: 조금 더 크게, 배경 흰색
@@ -171,7 +183,13 @@ for _, row in tourist_df.iterrows():
         background_color=row["color"],
         prefix="fa",
         icon_size=[20, 20],
-        inner_icon_style="font-size:12px; margin:0px;"  # 글자/아이콘 크기 조정
+        inner_icon_style="""
+            font-size:12px;
+            line-height:25px;
+            text-align:center;
+            vertical-align:middle;
+            margin:0px;
+        """
     )
 ).add_to(m)
 
