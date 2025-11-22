@@ -11,26 +11,7 @@ api_key = "f0e46463ccf90abd0defd9c79c8568e922e07a835961b1676cdb2065ecc23494"
 
 radius_m = st.slider("관광지 반경 (m)", 500, 2000, 1000, step=100)
 
-# contentTypeId → 색상 매핑
-TYPE_COLORS = {
-    75: "green",
-    76: "blue",
-    77: "gray",
-    78: "purple",
-    79: "orange",
-    82: "pink",
-    85: "cadetblue"
-}
 
-TYPE_NAMES = {
-    75: "레포츠",
-    76: "관광지",
-    77: "교통",
-    78: "문화시설",
-    79: "쇼핑",
-    82: "음식점",
-    85: "축제/공연/행사"
-}
 
 # ------------------ 호텔 리스트 ------------------ #
 @st.cache_data(ttl=3600)
@@ -118,13 +99,24 @@ folium.Marker(
 ).add_to(m)
 
 
-# 관광지 마커 표시
-for i, row in tourist_df.iterrows():
-    icon_color = TYPE_COLORS.get(row["type"], "black")
+# 관광지 색상 매핑
+color_map = {
+    "레포츠":"green","관광지":"blue","교통":"gray",
+    "문화시설":"purple","쇼핑":"orange",
+    "음식점":"pink","축제/공연/행사":"cadetblue"
+}
 
-
-st.subheader(f"{selected_hotel} 주변 관광지 지도")
-st_folium(m, width=700, height=500)
+for i, row in tour_df.iterrows():
+    highlight = (spot_info is not None) and (row['title']==spot_info['title'])
+    folium.CircleMarker(
+        location=[row['lat'], row['lng']],
+        radius=10 if highlight else 5,
+        color="yellow" if highlight else color_map.get(row['type_name'],"blue"),
+        fill=True,
+        fill_color="yellow" if highlight else color_map.get(row['type_name'],"blue"),
+        fill_opacity=0.7 if not highlight else 1,
+        popup=f"{row['title']} ({row['type_name']})"
+    ).add_to(m)
 
 
 # ------------------ 예쁜 표로 목록 출력 ------------------ #
