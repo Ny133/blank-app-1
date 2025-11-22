@@ -232,34 +232,19 @@ m.get_root().html.add_child(folium.Element(legend_html))
 st_folium(m, width=900, height=550)
 
 
-# ------------------ 호텔 주변 관광지 목록 표시 ------------------
+# ------------------ 호텔 주변 관광지 목록 표시 (분류별) ------------------
 st.subheader("호텔 주변 관광지 목록")
 
 if not tourist_df.empty:
-    display_df = tourist_df.copy()
-    
-    # 선택된 관광지가 있을 때만 '선택됨' 표시
-    if selected_spot is not None:
-        display_df["선택"] = display_df["name"].apply(
-            lambda x: "✅ 선택됨" if x == selected_spot["name"] else ""
+    # 분류별로 나누어 표시
+    for t_type, group in tourist_df.groupby("type_name"):
+        st.markdown(f"### {t_type}")
+        display_df = group[["name", "color"]].rename(columns={"name": "관광지명", "color": "색상"})
+        # 색상 시각화
+        display_df["색상"] = display_df["색상"].apply(
+            lambda x: f'<div style="width:40px; height:15px; background:{x}; border:1px solid #000;"></div>'
         )
-    else:
-        display_df["선택"] = ""
-    
-    display_df = display_df[["선택", "name", "type_name", "color"]]
-    display_df = display_df.rename(columns={
-        "name": "관광지명",
-        "type_name": "분류",
-        "color": "색상"
-    })
-    
-    # 색상을 시각적으로 표시
-    display_df["색상"] = display_df["색상"].apply(
-        lambda x: f'<div style="width:40px; height:15px; background:{x}; border:1px solid #000;"></div>'
-    )
-    
-    st.write("※ '선택됨' 표시가 있는 관광지는 현재 지도에서 강조된 관광지입니다.")
-    st.write(display_df.to_html(escape=False), unsafe_allow_html=True)
+        st.write(display_df.to_html(index=False, escape=False), unsafe_allow_html=True)
 else:
     st.write("주변 관광지 데이터가 없습니다.")
 
