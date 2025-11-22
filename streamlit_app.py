@@ -110,15 +110,24 @@ folium.Marker(
 # 관광지 표시
 for _, row in tourist_df.iterrows():
     highlight = selected_spot is not None and row["name"] == selected_spot["name"]
-    folium.CircleMarker(
-        location=[row["lat"], row["lng"]],
-        radius=10 if highlight else 5,
-        color="yellow" if highlight else row["color"],
-        fill=True,
-        fill_color="yellow" if highlight else row["color"],
-        fill_opacity=1 if highlight else 0.8,
-        popup=f"{row['name']} ({row['type_name']})"
-    ).add_to(m)
+
+    if highlight:
+        folium.Marker(
+            location=[row["lat"], row["lng"]],
+            popup=f"{row['name']} ({row['type_name']})",
+            icon=folium.Icon(color="yellow", icon="star", prefix="fa")
+        ).add_to(m)
+    else:
+        folium.CircleMarker(
+            location=[row["lat"], row["lng"]],
+            radius=5,
+            color=row["color"],
+            fill=True,
+            fill_color=row["color"],
+            fill_opacity=0.8,
+            popup=f"{row['name']} ({row['type_name']})"
+        ).add_to(m)
+
 
 # 선택된 관광지가 있으면 지도 중심 이동
 if selected_spot is not None:
