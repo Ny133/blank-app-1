@@ -128,7 +128,7 @@ if page == "호텔 정보":
     # 관광지 타입별 수 정리
     st.markdown("### 관광지 타입별 수")
     type_counts = tourist_df["type_name"].value_counts().rename_axis("관광지 타입").reset_index(name="개수")
-    st.dataframe(type_counts, use_container_width=True)  # 인덱스 번호 없음
+    st.table(type_counts)
 
     
     # 호텔 이미지
@@ -173,7 +173,7 @@ if page == "호텔 정보":
 elif page == "관광지 보기":
     st.subheader("📍 호텔 주변 관광지 보기")
     
-    col1, col2 = st.columns([2,1])
+    col1, col2 = st.columns([3,1])
     
     with col1:
         st.markdown("### 지도")
@@ -250,7 +250,7 @@ elif page == "관광지 보기":
         m.get_root().html.add_child(folium.Element(legend_html))
 
         
-        st_folium(m, width=700, height=550)
+        st_folium(m, width=800, height=600)
 
     # ---------------- 관광지 목록 ----------------
     st.markdown("### 관광지 목록")
@@ -266,6 +266,14 @@ elif page == "관광지 보기":
             df_list.append(temp[["관광지 타입","name","구글 지도"]])
         final_df = pd.concat(df_list, ignore_index=True)
         final_df = final_df.rename(columns={"name":"관광지명"})
-        st.write(final_df.to_html(index=False, escape=False), unsafe_allow_html=True)
+        st.write(
+            final_df.to_html(
+                index=False, 
+                escape=False,
+                justify="center"
+            ).replace("<th>", "<th style='text-align:center'>"),
+            unsafe_allow_html=True
+        )
+
     else:
         st.write("주변 관광지 데이터가 없습니다.")
