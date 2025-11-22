@@ -23,6 +23,33 @@ TYPE_NAMES = {75: "레포츠", 76: "관광지", 77: "교통", 78: "문화시설"
 
 TYPE_ICONS = {75: "fire", 76: "flag", 77: "plane", 78: "camera",
               79: "shopping-cart", 80: "home", 82: "cutlery", 85: "music"}
+# -------------------------------------------
+# 🏨 호텔 상세 정보 주소/연락처 가져오기 (detailCommon2)
+# -------------------------------------------
+def get_hotel_detail(api_key, content_id):
+    url = "http://apis.data.go.kr/B551011/EngService2/detailCommon2"
+    params = {
+        "ServiceKey": api_key,
+        "MobileOS": "ETC",
+        "MobileApp": "hotel_app",
+        "contentId": content_id,
+        "contentTypeId": 32,  # 숙박 시설
+        "overviewYN": "Y",
+        "addrinfoYN": "Y",
+        "defaultYN": "Y",
+        "_type": "json"
+    }
+    try:
+        res = requests.get(url, params=params)
+        data = res.json()
+        item = data["response"]["body"]["items"]["item"]
+        return {
+            "addr1": item.get("addr1", ""),
+            "addr2": item.get("addr2", ""),
+            "tel": item.get("tel", "정보 없음")
+        }
+    except:
+        return {"addr1": "", "addr2": "", "tel": "정보 없음"}
 
 # ------------------ 호텔 데이터 ------------------
 @st.cache_data(ttl=3600)
@@ -147,10 +174,13 @@ if page == "호텔 정보":
 
     st.subheader("🏨 선택 호텔 상세 정보")
 
+    # 주소/연락처 가져오기
+    detail_info = get_hotel_detail(api_key, hotel_info["contentid"])
+
     st.markdown(f"""
     **호텔명:** {hotel_info['name']}  
-    **주소:** {hotel_info.get('address1','')} {hotel_info.get('address2','')}  
-    **연락처:** {hotel_info.get('telephone', '정보 없음')}  
+    **주소:** {detail_info['addr1']} {detail_info['addr2']}  
+    **연락처:** {detail_info['tel']}  
     **평균 가격:** {hotel_info['price']:,}원  
     **평점:** ⭐ {hotel_info['rating']}  
     """)
@@ -164,15 +194,18 @@ if page == "호텔 정보":
         st.write("이미지 없음")
 
     # ---------------- ② 주변 관광지 Top5 (숙박 제외) ----------------
-    st.markdown("### 주변 관광지 Top 5")
+    st.markdown("### 🗺 주변 관광지 Top 5 (숙박 제외)")
 
+    # 숙박(80번) 제외
     tourist_df_filtered = tourist_df[tourist_df["type"] != 80]
 
+    # 거리 계산
     tourist_df_filtered["dist"] = np.sqrt(
         (tourist_df_filtered["lat"] - hotel_info["lat"])**2 +
         (tourist_df_filtered["lng"] - hotel_info["lng"])**2
     )
 
+    # 가까운 순으로 5개
     top5 = tourist_df_filtered.sort_values("dist").head(5)
 
     for _, row in top5.iterrows():
@@ -180,6 +213,7 @@ if page == "호텔 정보":
 
     # ---------------- ③ 리뷰 요약 ----------------
     st.markdown("### ⭐ 호텔 리뷰 요약")
+
     dummy_reviews = [
         "Good location and very clean rooms",
         "Bad smell in the hallway",
