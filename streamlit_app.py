@@ -96,6 +96,8 @@ page = st.radio(
     "페이지 선택", 
     ["호텔 정보", "관광지 보기", "주변 관광지수와 별점에 따른 호텔 가격"],
     horizontal=True
+)
+
 
 # ------------------ 호텔 이미지 ------------------
 def get_hotel_images(api_key, content_id):
