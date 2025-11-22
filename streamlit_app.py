@@ -121,12 +121,11 @@ for _, row in tourist_df.iterrows():
             location=[row["lat"], row["lng"]],
             popup=f"{row['name']} ({row['type_name']})",
             icon=BeautifyIcon(
-                icon="star",
+                icon=none,
                 icon_shape="marker",   # marker 모양
                 border_color="yellow",
                 text_color="white",
-                background_color="yellow",
-                spin=True
+                background_color="yellow"
             )
         ).add_to(m)
     else:
