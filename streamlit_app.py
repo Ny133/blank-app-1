@@ -51,13 +51,25 @@ hotels_df = get_hotels(api_key)
 selected_hotel = st.selectbox("호텔 선택", hotels_df["name"])
 hotel_info = hotels_df[hotels_df["name"]==selected_hotel].iloc[0]
 
-# 호텔 정보 표시
+# 호텔 정보 표시 + 주변 관광지 수
 st.subheader("🏨 선택 호텔 정보")
+
+# 분류별 관광지 개수 계산
+if not tourist_df.empty:
+    type_counts = tourist_df.groupby("type_name").size()
+    counts_text = "<br>".join([f"**{name}**: {count}개" for name, count in type_counts.items()])
+else:
+    counts_text = "주변 관광지 데이터가 없습니다."
+
 st.markdown(f"""
 **호텔명:** {hotel_info['name']}  
 **평균 가격:** {hotel_info['price']:,}원   
 **평점:** {hotel_info['rating']}  
-""")
+<br>
+**주변 관광지 수:**<br>
+{counts_text}
+""", unsafe_allow_html=True)
+
 
 # ------------------ 관광지 데이터 ------------------
 @st.cache_data(ttl=3600)
