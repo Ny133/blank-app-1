@@ -237,9 +237,7 @@ elif page == "관광지 보기":
             font-size:14px;
             padding: 10px;
             box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-        ">
-        <b>[관광지 범례]</b><br>
-        """
+        "><b>[관광지 범례]</b><br>"""
         for t_type, color in TYPE_COLORS.items():
             icon = TYPE_ICONS.get(t_type, "info-sign")
             name = TYPE_NAMES.get(t_type, "")
@@ -249,16 +247,20 @@ elif page == "관광지 보기":
         m.get_root().html.add_child(folium.Element(legend_html))
         
         st_folium(m, width=700, height=550)
-    
-    with col2:
-        st.markdown("### 관광지 목록")
-        if not tourist_df.empty:
-            for t_type, group in tourist_df.groupby("type_name"):
-                st.markdown(f"#### {t_type}")
-                display_df = group[["name","color"]].rename(columns={"name":"관광지명","color":"색상"})
-                display_df["색상"] = display_df["색상"].apply(
-                    lambda x: f'<div style="width:40px; height:15px; background:{x}; border:1px solid #000;"></div>'
-                )
-                st.write(display_df.to_html(index=False, escape=False), unsafe_allow_html=True)
-        else:
-            st.write("주변 관광지 데이터가 없습니다.")
+
+    # ---------------- 관광지 목록 ----------------
+    st.markdown("### 관광지 목록")
+    if not tourist_df.empty:
+        df_list = []
+        for t_type, group in tourist_df.groupby("type_name"):
+            temp = group[["name","lat","lng"]].copy()
+            temp["관광지 타입"] = t_type
+            temp["구글 지도"] = temp.apply(
+                lambda x: f'<a href="https://www.google.com/maps/search/?api=1&query={x["lat"]},{x["lng"]}" target="_blank">지도 보기</a>', axis=1
+            )
+            df_list.append(temp[["관광지 타입","name","구글 지도"]])
+        final_df = pd.concat(df_list, ignore_index=True)
+        final_df = final_df.rename(columns={"name":"관광지명"})
+        st.write(final_df.to_html(index=False, escape=False), unsafe_allow_html=True)
+    else:
+        st.write("주변 관광지 데이터가 없습니다.")
