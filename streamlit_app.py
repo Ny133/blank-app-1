@@ -142,37 +142,37 @@ if page == "호텔 정보":
     else:
         st.write("이미지 없음")
 
-   # ---------------- ② 주변 관광지 Top5 (AI 추천 기반) ----------------
-st.markdown("### 주변 관광지 Top 5 (AI 추천 기반)")
-
-# 숙박(80번) 제외
-tourist_df_filtered = tourist_df[tourist_df["type"] != 80].copy()
-
-# 거리 계산
-tourist_df_filtered["dist"] = np.sqrt(
-    (tourist_df_filtered["lat"] - hotel_info["lat"])**2 +
-    (tourist_df_filtered["lng"] - hotel_info["lng"])**2
-)
-
-# 가상의 평점 & 인기 점수 (예: 0~1 사이 랜덤)
-np.random.seed(42)
-tourist_df_filtered["popularity"] = np.random.rand(len(tourist_df_filtered))
-tourist_df_filtered["rating"] = np.random.uniform(3.0,5.0, size=len(tourist_df_filtered))
-
-# AI 추천 점수 계산
-# 가중치 예시: 거리 50%, 평점 30%, 인기 20%
-tourist_df_filtered["score"] = (
-    (1 / (tourist_df_filtered["dist"] + 0.001)) * 0.5 +
-    (tourist_df_filtered["rating"] / 5.0) * 0.3 +
-    tourist_df_filtered["popularity"] * 0.2
-)
-
-# 점수 기준 Top5
-top5_ai = tourist_df_filtered.sort_values("score", ascending=False).head(5)
-
-for _, row in top5_ai.iterrows():
-    st.write(f"- **{row['name']}** ({row['type_name']}) - 점수: {row['score']:.2f}")
-
+       # ---------------- ② 주변 관광지 Top5 (AI 추천 기반) ----------------
+    st.markdown("### 주변 관광지 Top 5 (AI 추천 기반)")
+    
+    # 숙박(80번) 제외
+    tourist_df_filtered = tourist_df[tourist_df["type"] != 80].copy()
+    
+    # 거리 계산
+    tourist_df_filtered["dist"] = np.sqrt(
+        (tourist_df_filtered["lat"] - hotel_info["lat"])**2 +
+        (tourist_df_filtered["lng"] - hotel_info["lng"])**2
+    )
+    
+    # 가상의 평점 & 인기 점수 (예: 0~1 사이 랜덤)
+    np.random.seed(42)
+    tourist_df_filtered["popularity"] = np.random.rand(len(tourist_df_filtered))
+    tourist_df_filtered["rating"] = np.random.uniform(3.0,5.0, size=len(tourist_df_filtered))
+    
+    # AI 추천 점수 계산
+    # 가중치 예시: 거리 50%, 평점 30%, 인기 20%
+    tourist_df_filtered["score"] = (
+        (1 / (tourist_df_filtered["dist"] + 0.001)) * 0.5 +
+        (tourist_df_filtered["rating"] / 5.0) * 0.3 +
+        tourist_df_filtered["popularity"] * 0.2
+    )
+    
+    # 점수 기준 Top5
+    top5_ai = tourist_df_filtered.sort_values("score", ascending=False).head(5)
+    
+    for _, row in top5_ai.iterrows():
+        st.write(f"- **{row['name']}** ({row['type_name']}) - 점수: {row['score']:.2f}")
+    
 
     # 리뷰 요약
     st.markdown("### ⭐ 호텔 리뷰 요약")
