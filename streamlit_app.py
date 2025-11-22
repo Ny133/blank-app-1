@@ -8,6 +8,9 @@ from folium.plugins import BeautifyIcon
 
 st.set_page_config(layout="wide")
 st.title("🏨 서울 호텔 + 주변 관광지 시각화")
+st.markdown("""
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+""", unsafe_allow_html=True)
 
 api_key = "f0e46463ccf90abd0defd9c79c8568e922e07a835961b1676cdb2065ecc23494"
 radius_m = st.slider("관광지 반경 (m)", 500, 2000, 1000, step=100)
