@@ -57,7 +57,6 @@ st.markdown(f"""
 **호텔명:** {hotel_info['name']}  
 **가격:** {hotel_info['price']}원  
 **평점:** {hotel_info['rating']}  
-**위도/경도:** {hotel_info['lat']}, {hotel_info['lng']}
 """)
 
 # ------------------ 관광지 데이터 ------------------
@@ -191,6 +190,44 @@ for _, row in tourist_df.iterrows():
 if selected_spot is not None:
     m.location = [selected_spot["lat"], selected_spot["lng"]]
     m.zoom_start = 17
+
+# ------------------ 범례(legend) 추가 ------------------
+legend_html = """
+<div style="
+    position: fixed;
+    top: 80px;
+    right: 10px;
+    width: 180px;
+    background-color: white;
+    border:2px solid grey;
+    z-index:9999;
+    font-size:14px;
+    padding: 10px;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+">
+<b>🗺 관광지 범례</b><br>
+"""
+
+for t_type, color in TYPE_COLORS.items():
+    icon = TYPE_ICONS.get(t_type, "info-sign")
+    name = TYPE_NAMES.get(t_type, "")
+    legend_html += f"""
+    <i class="fa fa-{icon}" style="color:{color}; margin-right:5px;"></i> {name} <br>
+    """
+
+# 선택 관광지 범례
+legend_html += """
+<i class="fa fa-star" style="color:yellow; margin-right:5px;"></i> 선택 관광지<br>
+"""
+
+# 호텔 범례
+legend_html += """
+<i class="fa fa-hotel" style="color:red; margin-right:5px;"></i> 호텔<br>
+"""
+
+legend_html += "</div>"
+
+m.get_root().html.add_child(folium.Element(legend_html))
 
 st_folium(m, width=900, height=550)
 
