@@ -109,15 +109,7 @@ def get_hotel_images(api_key, content_id):
     except:
         return []
 
-# ------------------ 리뷰 요약 ------------------
-def summarize_reviews(reviews):
-    if not reviews:
-        return "리뷰 정보를 불러올 수 없습니다."
-    return f"""
-- 긍정적인 리뷰 수: {sum('good' in r.lower() or 'clean' in r.lower() for r in reviews)}
-- 부정적인 리뷰 수: {sum('bad' in r.lower() or 'dirty' in r.lower() for r in reviews)}
-- 전체 요약: 전반적으로 '{hotel_info['name']}'에 대한 만족도는 양호하며, 청결/위치 관련 언급이 많습니다.
-    """
+
 
 # ---------- 호텔 정보 페이지 UI -----------
 if page == "호텔 정보":
@@ -141,49 +133,18 @@ if page == "호텔 정보":
         st.image(images, width=300)
     else:
         st.write("이미지 없음")
-
-       # ---------------- ② 주변 관광지 Top5 (AI 추천 기반) ----------------
-    st.markdown("### 주변 관광지 Top 5 (AI 추천 기반)")
-    
-    # 숙박(80번) 제외
-    tourist_df_filtered = tourist_df[tourist_df["type"] != 80].copy()
-    
-    # 거리 계산
+        
+     # 주변 관광지 Top5
+    st.markdown("### 주변 관광지 Top 5")
+    tourist_df_filtered = tourist_df[tourist_df["type"] != 80]
     tourist_df_filtered["dist"] = np.sqrt(
         (tourist_df_filtered["lat"] - hotel_info["lat"])**2 +
         (tourist_df_filtered["lng"] - hotel_info["lng"])**2
     )
-    
-    # 가상의 평점 & 인기 점수 (예: 0~1 사이 랜덤)
-    np.random.seed(42)
-    tourist_df_filtered["popularity"] = np.random.rand(len(tourist_df_filtered))
-    tourist_df_filtered["rating"] = np.random.uniform(3.0,5.0, size=len(tourist_df_filtered))
-    
-    # AI 추천 점수 계산
-    # 가중치 예시: 거리 50%, 평점 30%, 인기 20%
-    tourist_df_filtered["score"] = (
-        (1 / (tourist_df_filtered["dist"] + 0.001)) * 0.5 +
-        (tourist_df_filtered["rating"] / 5.0) * 0.3 +
-        tourist_df_filtered["popularity"] * 0.2
-    )
-    
-    # 점수 기준 Top5
-    top5_ai = tourist_df_filtered.sort_values("score", ascending=False).head(5)
-    
-    for _, row in top5_ai.iterrows():
-        st.write(f"- **{row['name']}** ({row['type_name']}) - 점수: {row['score']:.2f}")
-    
+    top5 = tourist_df_filtered.sort_values("dist").head(5)
+    for _, row in top5.iterrows():
+        st.write(f"- **{row['name']}** ({row['type_name']})")
 
-    # 리뷰 요약
-    st.markdown("### ⭐ 호텔 리뷰 요약")
-    dummy_reviews = [
-        "Good location and very clean rooms",
-        "Bad smell in the hallway",
-        "Very friendly staff and good breakfast",
-        "Room was a bit dirty but overall fine"
-    ]
-    summary = summarize_reviews(dummy_reviews)
-    st.info(summary)
 
     # 예약 링크
     booking_url = f"https://www.booking.com/searchresults.ko.html?ss={hotel_info['name'].replace(' ', '+')}"
