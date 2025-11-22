@@ -231,3 +231,25 @@ m.get_root().html.add_child(folium.Element(legend_html))
 
 st_folium(m, width=900, height=550)
 
+# ------------------ 호텔 주변 관광지 목록 표시 ------------------
+st.subheader("호텔 주변 관광지 목록")
+
+if not tourist_df.empty:
+    display_df = tourist_df.copy()
+    display_df["선택"] = np.where(
+        (selected_spot is not None) & (display_df["name"] == selected_spot["name"]),
+        "✅ 선택됨", ""
+    )
+    display_df = display_df[["선택", "name", "type_name", "color"]]
+    display_df = display_df.rename(columns={
+        "name": "관광지명",
+        "type_name": "분류",
+        "color": "색상"
+    })
+    # 색상을 시각적으로 표시하기 위해 HTML 스타일 적용
+    display_df["색상"] = display_df["색상"].apply(lambda x: f'<div style="width:40px; height:15px; background:{x}; border:1px solid #000;"></div>')
+    
+    st.write("※ '선택됨' 표시가 있는 관광지는 현재 지도에서 강조된 관광지입니다.")
+    st.write(display_df.to_html(escape=False), unsafe_allow_html=True)
+else:
+    st.write("주변 관광지 데이터가 없습니다.")
