@@ -15,7 +15,7 @@ radius_m = st.slider("관광지 반경 (m)", 500, 2000, 1000, step=100)
 TYPE_COLORS = {75: "green", 76: "blue", 77: "gray", 78: "purple",
                79: "orange", 80: "red", 82: "pink", 85: "cadetblue"}
 TYPE_NAMES = {75: "레포츠", 76: "관광지", 77: "교통", 78: "문화시설",
-              79: "쇼핑", 80: "숙박", 82: "음식점", 85: "축제/공연/행사"}
+              79: "쇼핑",  82: "음식점", 85: "축제/공연/행사"}
 
 # ------------------ 호텔 데이터 ------------------
 @st.cache_data(ttl=3600)
@@ -81,16 +81,21 @@ tourist_df = pd.DataFrame(tourist_list)
 tourist_df["type_name"] = tourist_df["type"].map(TYPE_NAMES)
 tourist_df["color"] = tourist_df["type"].map(TYPE_COLORS)
 
-# ------------------ 분류별 선택 ------------------
-st.subheader("📋 관광지 선택 (분류별)")
+# ------------------ 관광지 분류 선택 ------------------
+st.subheader("📋 관광지 분류 선택")
+
+# 1) 분류 선택
+categories = tourist_df["type_name"].unique().tolist()
+selected_category = st.selectbox("관광지 분류 선택", ["선택 안 함"] + categories)
 
 selected_spot = None
-for t_type, group in tourist_df.groupby("type_name"):
-    st.markdown(f"### {t_type}")
-    spot_options = ["선택 안 함"] + group["name"].tolist()
-    choice = st.selectbox(f"{t_type} 선택", spot_options, key=t_type)
+# 2) 선택한 분류의 관광지 선택
+if selected_category != "선택 안 함":
+    filtered = tourist_df[tourist_df["type_name"] == selected_category]
+    spot_options = ["선택 안 함"] + filtered["name"].tolist()
+    choice = st.selectbox(f"{selected_category} 선택", spot_options)
     if choice != "선택 안 함":
-        selected_spot = group[group["name"]==choice].iloc[0]
+        selected_spot = filtered[filtered["name"] == choice].iloc[0]
 
 # ------------------ 지도 생성 ------------------
 st.subheader(f"{selected_hotel} 주변 관광지 지도")
