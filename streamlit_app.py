@@ -88,6 +88,8 @@ if page == "호텔 정보":
         counts_text = "주변 관광지 데이터가 없습니다."
     st.markdown(f"""
     **호텔명:** {hotel_info['name']}  
+    **주소:** {hotel_info.get('address1','')}{(' ' + hotel_info.get('address2','')) if hotel_info.get('address2') else ''}  
+    **연락처:** {hotel_info.get('telephone', '정보 없음')}  
     **평균 가격:** {hotel_info['price']:,}원  
     **평점:** {hotel_info['rating']}  
     <br>
