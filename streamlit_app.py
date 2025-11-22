@@ -17,7 +17,7 @@ TYPE_COLORS = {
     76: "#1E90FF",  # 관광지 → 도저블루
     77: "#00CED1",  # 교통 → 다크터쿼이즈
     78: "#9370DB",  # 문화시설 → 미디엄퍼플
-    79: "#FFD1B3",  # 쇼핑 → 연한 주황
+    79: "#FFB347",  # 쇼핑 → 연한 주황
     80: "#A9A9A9",  # 다른 숙박지 → 다크그레이
     82: "#FF69B4",  # 음식점 → 핫핑크
     85: "#4682B4"   # 축제/공연/행사 → 스틸블루
@@ -124,7 +124,7 @@ folium.Marker(
         prefix="fa",
         icon_size=[40, 40],
         inner_icon_style="""
-            font-size:12px;
+            font-size:20px;
             line-height:25px;
             text-align:center;
             vertical-align:middle;
@@ -171,7 +171,7 @@ for _, row in tourist_df.iterrows():
                 prefix="fa",
                 icon_size=[40, 40],  # 크게
                 inner_icon_style="""
-            font-size:12px;
+            font-size:20px;
             line-height:25px;
             text-align:center;
             vertical-align:middle;
@@ -180,27 +180,28 @@ for _, row in tourist_df.iterrows():
     )
         ).add_to(m)
     else:
-        # 일반 관광지: 조금 더 크게, 배경 흰색
-        folium.Marker(
+       # 일반 관광지: 조금 더 크게, 원형, 아이콘 중앙 정렬
+folium.Marker(
     location=[row["lat"], row["lng"]],
     popup=f"{row['name']} ({row['type_name']})",
     icon=BeautifyIcon(
-        icon=icon_name,
+        icon=icon_name,           # ex: 'fire', 'camera', ...
         icon_shape="circle",
         border_color=row["color"],
         text_color="white",
         background_color=row["color"],
         prefix="fa",
-        icon_size=[20, 20],
+        icon_size=[20, 20],       # 전체 아이콘 크기
         inner_icon_style="""
             font-size:12px;
-            line-height:25px;
+            line-height:20px;
             text-align:center;
             vertical-align:middle;
             margin:0px;
         """
     )
 ).add_to(m)
+
 
 
 
