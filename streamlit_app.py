@@ -111,46 +111,58 @@ from folium.plugins import BeautifyIcon
 
 from folium.plugins import BeautifyIcon
 
-# 관광지 표시
+from folium.plugins import BeautifyIcon
+
+# contentTypeId → 아이콘 매핑
+TYPE_ICONS = {
+    75: "fire",
+    76: "flag",
+    77: "plane",
+    78: "camera",
+    79: "shopping-cart",
+    80: "home",
+    82: "cutlery",
+    85: "music"
+}
+
+# 관광지 표시 반복문 
 for _, row in tourist_df.iterrows():
     highlight = selected_spot is not None and row["name"] == selected_spot["name"]
 
+    icon_name = TYPE_ICONS.get(row["type"], "info-sign")  # 기본값 info-sign
+
     if highlight:
-        # 선택된 관광지: Marker + 아이콘 강조, 원 없음
-       folium.Marker(
-    location=[row["lat"], row["lng"]],
-    popup=f"{row['name']} ({row['type_name']})",
-    icon=BeautifyIcon(
-        icon="star",
-        icon_shape="marker",
-        border_color="yellow",
-        text_color="white",
-        background_color="yellow",
-        prefix="fa",
-        icon_size=[25, 25],
-        inner_icon_style="margin:0px;"
-    )
-).add_to(m)
-
+        # 선택 관광지: 크게 강조
+        folium.Marker(
+            location=[row["lat"], row["lng"]],
+            popup=f"{row['name']} ({row['type_name']})",
+            icon=BeautifyIcon(
+                icon=icon_name,
+                icon_shape="marker",
+                border_color="yellow",
+                text_color="white",
+                background_color="yellow",
+                prefix="fa",
+                icon_size=[25, 25],
+                inner_icon_style="margin:0px;"
+            )
+        ).add_to(m)
     else:
-     # 일반 관광지 표시
-      folium.Marker(
-          location=[row["lat"], row["lng"]],
-          popup=f"{row['name']} ({row['type_name']})",
-          icon=BeautifyIcon(
-              icon="circle",               # 작은 원 모양
-              icon_shape="marker",
-              border_color=row["color"],   # 원래 컬러 유지
-              text_color=row["color"],
-              background_color="white",    # 배경은 흰색
-              prefix="fa",
-              icon_size=[15, 15],          # 크기 작게
-              inner_icon_style="margin:0px;"
-          )
-      ).add_to(m)
-        
-
-
+        # 일반 관광지: 작게
+        folium.Marker(
+            location=[row["lat"], row["lng"]],
+            popup=f"{row['name']} ({row['type_name']})",
+            icon=BeautifyIcon(
+                icon=icon_name,
+                icon_shape="marker",
+                border_color=row["color"],
+                text_color=row["color"],
+                background_color="white",
+                prefix="fa",
+                icon_size=[15, 15],
+                inner_icon_style="margin:0px;"
+            )
+        ).add_to(m)
 
 
 # 선택된 관광지가 있으면 지도 중심 이동
