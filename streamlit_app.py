@@ -125,11 +125,10 @@ TYPE_ICONS = {
     85: "music"
 }
 
-# 관광지 표시 반복문 
+# 관광지 표시 반복문
 for _, row in tourist_df.iterrows():
     highlight = selected_spot is not None and row["name"] == selected_spot["name"]
-
-    icon_name = TYPE_ICONS.get(row["type"], "info-sign")  # 기본값 info-sign
+    icon_name = TYPE_ICONS.get(row["type"], "info-sign")
 
     if highlight:
         # 선택 관광지: 크게 강조
@@ -143,12 +142,12 @@ for _, row in tourist_df.iterrows():
                 text_color="white",
                 background_color="yellow",
                 prefix="fa",
-                icon_size=[25, 25],
+                icon_size=[40, 40],  # 크게
                 inner_icon_style="margin:0px;"
             )
         ).add_to(m)
     else:
-        # 일반 관광지: 작게
+        # 일반 관광지: 조금 더 크게, 배경 흰색
         folium.Marker(
             location=[row["lat"], row["lng"]],
             popup=f"{row['name']} ({row['type_name']})",
@@ -159,7 +158,7 @@ for _, row in tourist_df.iterrows():
                 text_color=row["color"],
                 background_color="white",
                 prefix="fa",
-                icon_size=[15, 15],
+                icon_size=[25, 25],  # 조금 키움
                 inner_icon_style="margin:0px;"
             )
         ).add_to(m)
