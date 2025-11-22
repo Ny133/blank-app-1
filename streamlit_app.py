@@ -337,7 +337,7 @@ elif page == "호텔 비교 분석":
     st.markdown(f"""
 **전체 호텔 평균**  
 평점: {avg_rating}  
-주변 관광지 수: {avg_tourist}
+주변 관광지 수: {avg_tourist}                                                                                                                                                                
 가격: {avg_price:,.0f}원  
 """)
 
