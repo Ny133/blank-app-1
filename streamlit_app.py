@@ -27,7 +27,7 @@ TYPE_ICONS = {75: "fire", 76: "flag", 77: "plane", 78: "camera",
 # ------------------ 호텔 데이터 ------------------
 @st.cache_data(ttl=3600)
 def get_hotels(api_key):
-    url = "http://apis.data.go.kr/B551011/KorService2/searchStay2"
+    url = "http://apis.data.go.kr/B551011/EngService2/searchStay2"
     params = {"ServiceKey": api_key, "numOfRows": 50, "pageNo": 1,
               "MobileOS": "ETC", "MobileApp": "hotel_analysis",
               "arrange": "A", "_type": "json", "areaCode": 1}
@@ -50,7 +50,7 @@ hotel_info = hotels_df[hotels_df["name"]==selected_hotel].iloc[0]
 # ------------------ 관광지 데이터 ------------------
 @st.cache_data(ttl=3600)
 def get_tourist_list(api_key, lat, lng, radius_m):
-    url = "http://apis.data.go.kr/B551011/KorService2/locationBasedList2"
+    url = "http://apis.data.go.kr/B551011/EngService2/locationBasedList2"
     params = {"ServiceKey": api_key, "numOfRows": 200, "pageNo":1,
               "MobileOS":"ETC","MobileApp":"hotel_analysis",
               "mapX":lng,"mapY":lat,"radius":radius_m,"arrange":"A","_type":"json"}
@@ -82,7 +82,7 @@ page = st.radio("페이지 선택", ["호텔 정보", "관광지 보기"], horiz
 # API: 관광지 상세 설명 가져오기(detailCommon2)
 # -------------------------------------------
 def get_tourist_detail(api_key, content_id, content_type_id):
-    url = "http://apis.data.go.kr/B551011/KorService2/detailCommon2"
+    url = "http://apis.data.go.kr/B551011/EngService2/detailCommon2"
     params = {
         "ServiceKey": api_key,
         "MobileOS": "ETC",
@@ -105,7 +105,7 @@ def get_tourist_detail(api_key, content_id, content_type_id):
 # API: 호텔 이미지 리스트 가져오기(detailImage2)
 # -------------------------------------------
 def get_hotel_images(api_key, content_id):
-    url = "http://apis.data.go.kr/B551011/KorService2/detailImage2"
+    url = "http://apis.data.go.kr/B551011/EngService2/detailImage2"
     params = {
         "ServiceKey": api_key,
         "MobileOS": "ETC",
