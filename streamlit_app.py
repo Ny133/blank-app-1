@@ -111,7 +111,6 @@ def get_hotel_images(api_key, content_id):
 
 
 
-# ---------- 호텔 정보 페이지 UI -----------
 if page == "호텔 정보":
     st.subheader("🏨 선택 호텔 정보")
 
@@ -125,7 +124,12 @@ if page == "호텔 정보":
     **평균 가격:** {hotel_info['price']:,}원  
     **평점:** ⭐ {hotel_info['rating']}  
     """)
-
+    
+    # 관광지 타입별 수 정리
+    st.markdown("### 관광지 타입별 수")
+    type_counts = tourist_df["type_name"].value_counts().rename_axis("관광지 타입").reset_index(name="개수")
+    st.table(type_counts)
+    
     # 호텔 이미지
     st.markdown("### 📷 호텔 이미지")
     images = get_hotel_images(api_key, hotel_info["contentid"])
@@ -134,7 +138,7 @@ if page == "호텔 정보":
     else:
         st.write("이미지 없음")
         
-     # 주변 관광지 Top5
+    # 주변 관광지 Top5
     st.markdown("### 주변 관광지 Top 5")
     tourist_df_filtered = tourist_df[tourist_df["type"] != 80]
     tourist_df_filtered["dist"] = np.sqrt(
@@ -146,7 +150,7 @@ if page == "호텔 정보":
         st.write(f"- **{row['name']}** ({row['type_name']})")
 
 
-       # 예약 링크 강조
+    # 예약 링크 강조
     hotel_name = hotel_info['name']
     booking_url = f"https://www.booking.com/searchresults.ko.html?ss={hotel_name.replace(' ', '+')}"
     
