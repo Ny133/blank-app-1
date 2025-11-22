@@ -100,12 +100,24 @@ if selected_category != "선택 안 함":
 # ------------------ 지도 생성 ------------------
 m = folium.Map(location=[hotel_info["lat"], hotel_info["lng"]], zoom_start=15)
 
-# 호텔 강조
+from folium.plugins import BeautifyIcon
+
+# 호텔 강조 (크기 40x40)
 folium.Marker(
     location=[hotel_info["lat"], hotel_info["lng"]],
     popup=f"<b>{hotel_info['name']}</b><br>가격: {hotel_info['price']}<br>평점: {hotel_info['rating']}",
-    icon=folium.Icon(color="red", icon="home", prefix="fa")
+    icon=BeautifyIcon(
+        icon="home",           # 호텔 아이콘
+        icon_shape="marker",
+        border_color="red",
+        text_color="white",
+        background_color="red",
+        prefix="fa",
+        icon_size=[40, 40],
+        inner_icon_style="margin:0px;"
+    )
 ).add_to(m)
+
 
 from folium.plugins import BeautifyIcon
 
@@ -158,7 +170,7 @@ for _, row in tourist_df.iterrows():
                 text_color=row["color"],
                 background_color="white",
                 prefix="fa",
-                icon_size=[25, 25],  # 조금 키움
+                icon_size=[20, 20],  # 조금 키움
                 inner_icon_style="margin:0px;"
             )
         ).add_to(m)
