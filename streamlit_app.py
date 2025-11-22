@@ -181,26 +181,26 @@ for _, row in tourist_df.iterrows():
         ).add_to(m)
     else:
        # 일반 관광지: 조금 더 크게, 원형, 아이콘 중앙 정렬
-folium.Marker(
-    location=[row["lat"], row["lng"]],
-    popup=f"{row['name']} ({row['type_name']})",
-    icon=BeautifyIcon(
-        icon=icon_name,           # ex: 'fire', 'camera', ...
-        icon_shape="circle",
-        border_color=row["color"],
-        text_color="white",
-        background_color=row["color"],
-        prefix="fa",
-        icon_size=[20, 20],       # 전체 아이콘 크기
-        inner_icon_style="""
-            font-size:12px;
-            line-height:20px;
-            text-align:center;
-            vertical-align:middle;
-            margin:0px;
-        """
-    )
-).add_to(m)
+        folium.Marker(
+            location=[row["lat"], row["lng"]],
+            popup=f"{row['name']} ({row['type_name']})",
+            icon=BeautifyIcon(
+                icon=icon_name,           # ex: 'fire', 'camera', ...
+                icon_shape="circle",
+                border_color=row["color"],
+                text_color="white",
+                background_color=row["color"],
+                prefix="fa",
+                icon_size=[20, 20],       # 전체 아이콘 크기
+                inner_icon_style="""
+                    font-size:12px;
+                    line-height:20px;
+                    text-align:center;
+                    vertical-align:middle;
+                    margin:0px;
+                """
+            )
+        ).add_to(m)
 
 
 
