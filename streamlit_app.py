@@ -55,7 +55,7 @@ hotel_info = hotels_df[hotels_df["name"]==selected_hotel].iloc[0]
 st.subheader("🏨 선택 호텔 정보")
 st.markdown(f"""
 **호텔명:** {hotel_info['name']}  
-**가격:** {hotel_info['price']}원  
+**평균 가격:** {hotel_info['price']:,}원   
 **평점:** {hotel_info['rating']}  
 """)
 
