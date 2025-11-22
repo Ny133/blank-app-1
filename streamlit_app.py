@@ -184,6 +184,7 @@ if page == "호텔 정보":
     booking_url = f"https://www.examplebooking.com/search?hotel={hotel_info['name'].replace(' ','+')}"
     st.markdown(f"[예약하기 ▶️]({booking_url})", unsafe_allow_html=True)
 
+
 # ------------------ 관광지 보기 페이지 ------------------
 elif page == "관광지 보기":
     st.subheader("📍 호텔 주변 관광지 보기")
