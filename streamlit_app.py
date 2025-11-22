@@ -13,7 +13,7 @@ radius_m = st.slider("관광지 반경 (m)", 500, 2000, 1000, step=100)
 
 # ------------------ 타입 컬러/이름 ------------------
 TYPE_COLORS = {75: "green", 76: "blue", 77: "gray", 78: "purple",
-               79: "orange", 80: "red", 82: "pink", 85: "cadetblue"}
+               79: "orange", 82: "pink", 85: "cadetblue"}
 TYPE_NAMES = {75: "레포츠", 76: "관광지", 77: "교통", 78: "문화시설",
               79: "쇼핑",  82: "음식점", 85: "축제/공연/행사"}
 
@@ -93,12 +93,11 @@ selected_spot = None
 if selected_category != "선택 안 함":
     filtered = tourist_df[tourist_df["type_name"] == selected_category]
     spot_options = ["선택 안 함"] + filtered["name"].tolist()
-    choice = st.selectbox(f"{selected_category} 선택", spot_options)
-    if choice != "선택 안 함":
-        selected_spot = filtered[filtered["name"] == choice].iloc[0]
+    selected_name = st.selectbox(f"{selected_category} 내 관광지 선택", spot_options)
+    if selected_name != "선택 안 함":
+        selected_spot = filtered[filtered["name"] == selected_name].iloc[0]
 
 # ------------------ 지도 생성 ------------------
-st.subheader(f"{selected_hotel} 주변 관광지 지도")
 m = folium.Map(location=[hotel_info["lat"], hotel_info["lng"]], zoom_start=15)
 
 # 호텔 강조
@@ -110,19 +109,21 @@ folium.Marker(
 
 # 관광지 표시
 for _, row in tourist_df.iterrows():
-    highlight = selected_spot is not None and row["name"]==selected_spot["name"]
+    highlight = selected_spot is not None and row["name"] == selected_spot["name"]
     folium.CircleMarker(
         location=[row["lat"], row["lng"]],
         radius=10 if highlight else 5,
         color="yellow" if highlight else row["color"],
         fill=True,
         fill_color="yellow" if highlight else row["color"],
-        fill_opacity=0.8 if not highlight else 1,
+        fill_opacity=1 if highlight else 0.8,
         popup=f"{row['name']} ({row['type_name']})"
     ).add_to(m)
 
+# 선택된 관광지가 있으면 지도 중심 이동
 if selected_spot is not None:
     m.location = [selected_spot["lat"], selected_spot["lng"]]
     m.zoom_start = 17
 
 st_folium(m, width=900, height=550)
+
