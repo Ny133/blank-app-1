@@ -106,8 +106,6 @@ tourist_df = pd.DataFrame(tourist_list)
 tourist_df["type_name"] = tourist_df["type"].map(TYPE_NAMES)
 tourist_df["color"] = tourist_df["type"].map(TYPE_COLORS)
 
-# ------------------ 관광지 선택 기능 ------------------ #
-selected_spot = st.selectbox("📌 지도에서 강조할 관광지 선택", ["(선택 안 함)"] + tourist_df["name"].tolist())
 
 # ------------------ 지도 생성 ------------------ #
 m = folium.Map(location=[hotel_info["lat"], hotel_info["lng"]], zoom_start=15)
@@ -124,27 +122,6 @@ folium.Marker(
 for i, row in tourist_df.iterrows():
     icon_color = TYPE_COLORS.get(row["type"], "black")
 
-    # 선택된 관광지는 강조 (노란색 + 크기 확대)
-    if row["name"] == selected_spot:
-        folium.Marker(
-            location=[row["lat"], row["lng"]],
-            popup=row["name"],
-            icon=folium.Icon(color="lightgray", icon="info-sign")
-        ).add_to(m)
-        folium.CircleMarker(
-            location=[row["lat"], row["lng"]],
-            radius=10,
-            color="yellow",
-            fill=True,
-            fill_color="yellow",
-            fill_opacity=0.7
-        ).add_to(m)
-    else:
-        folium.Marker(
-            location=[row["lat"], row["lng"]],
-            popup=row["name"],
-            icon=folium.Icon(color=icon_color, icon="info-sign")
-        ).add_to(m)
 
 st.subheader(f"{selected_hotel} 주변 관광지 지도")
 st_folium(m, width=700, height=500)
