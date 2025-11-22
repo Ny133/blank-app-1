@@ -147,18 +147,19 @@ if page == "호텔 정보":
 
 
        # 예약 링크 강조
-    booking_url = f"https://www.booking.com/searchresults.ko.html?ss={hotel_info['name'].replace(' ', '+')}"
+    hotel_name = hotel_info['name']
+    booking_url = f"https://www.booking.com/searchresults.ko.html?ss={hotel_name.replace(' ', '+')}"
+    
     st.markdown(f"""
     <div style="
-        padding: 15px;
-        border: 2px solid #f1c40f;
-        background-color: #f9e79f;
-        border-radius: 10px;
+        padding: 15px; 
+        border: 2px solid #d3d3d3; 
+        background-color: #f0f0f0; 
+        border-radius: 10px; 
         text-align: center;
         font-size: 18px;
-        font-weight: bold;
-    ">
-    [👉 '{hotel_info['name']}' 예약하러 가기]({booking_url})
+        font-weight: bold;">
+        <a href="{booking_url}" target="_blank">👉 '{hotel_name}' 예약하러 가기</a>
     </div>
     """, unsafe_allow_html=True)
 
