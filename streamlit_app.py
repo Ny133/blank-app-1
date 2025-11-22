@@ -143,24 +143,25 @@ for _, row in tourist_df.iterrows():
     highlight = selected_spot is not None and row["name"] == selected_spot["name"]
     icon_name = TYPE_ICONS.get(row["type"], "info-sign")
 
-    if highlight:
-       from folium.plugins import BeautifyIcon
+from folium.plugins import BeautifyIcon  # 파일 맨 위쪽에서 임포트
 
-        # 선택 관광지: 노란색 + 크게 강조
-        folium.Marker(
-            location=[row["lat"], row["lng"]],
-            popup=f"{row['name']} ({row['type_name']})",
-            icon=BeautifyIcon(
-                icon="star",
-                icon_shape="marker",        # 기본 marker 모양
-                border_color="orange",      # 테두리 색
-                text_color="white",
-                background_color="yellow",  # 배경 노란색
-                prefix="fa",
-                icon_size=[30, 30],         # 크기 키움
-                inner_icon_style="margin:0px;"
-            )
-        ).add_to(m)
+if highlight:
+    # 선택 관광지: 노란색 + 크게 강조
+    folium.Marker(
+        location=[row["lat"], row["lng"]],
+        popup=f"{row['name']} ({row['type_name']})",
+        icon=BeautifyIcon(
+            icon="star",
+            icon_shape="marker",        # 기본 marker 모양
+            border_color="yellow",      # 테두리 색
+            text_color="white",
+            background_color="yellow",  # 배경 노란색
+            prefix="fa",
+            icon_size=[30, 30],         # 크기 키움
+            inner_icon_style="margin:0px;"
+        )
+    ).add_to(m)
+
 
 
     else:
