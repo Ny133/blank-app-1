@@ -125,7 +125,8 @@ for _, row in tourist_df.iterrows():
                 icon_shape="marker",   # marker 모양
                 border_color="yellow",
                 text_color="white",
-                background_color="yellow"
+                background_color="yellow",
+                prefix="fa"
             )
         ).add_to(m)
     else:
