@@ -166,24 +166,24 @@ if page == "호텔 정보":
     else:
         st.write("이미지 없음")
 
-    # ---------------- ② 주변 관광지 Top5 (숙박 제외) ----------------
-    st.markdown("### 🗺 주변 관광지 Top 5 (숙박 시설 제외)")
+  # ---------------- ② 주변 관광지 Top5 (숙박 제외) ----------------
+st.markdown("### 주변 관광지 Top 5")
 
-    # contenttypeid != 32 → 숙박업 제거
-    tourist_df_filtered = tourist_df[tourist_df["contenttypeid"] != 32]
+# contenttypeid = type
+# 80 = 다른 숙박지 → 제외
+tourist_df_filtered = tourist_df[tourist_df["type"] != 80]
 
-    tourist_df_filtered["dist"] = np.sqrt(
-        (tourist_df_filtered["lat"] - hotel_info["lat"])**2 +
-        (tourist_df_filtered["lng"] - hotel_info["lng"])**2
-    )
+# 거리 계산
+tourist_df_filtered["dist"] = np.sqrt(
+    (tourist_df_filtered["lat"] - hotel_info["lat"])**2 +
+    (tourist_df_filtered["lng"] - hotel_info["lng"])**2
+)
 
-    top5 = tourist_df_filtered.sort_values("dist").head(5)
+top5 = tourist_df_filtered.sort_values("dist").head(5)
 
-    for idx, row in top5.iterrows():
-        overview = get_tourist_detail(api_key, row["contentid"], row["contenttypeid"])
-
-        with st.expander(f"{row['name']} ({row['type_name']}) — {round(row['dist']*111000)}m"):
-            st.write(overview)
+# 출력
+for _, row in top5.iterrows():
+    st.write(f"- **{row['name']}** ({row['type_name']})")
 
     # ---------------- ③ 리뷰 요약 ----------------
     st.markdown("### ⭐ 호텔 리뷰 요약")
