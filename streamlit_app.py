@@ -78,14 +78,38 @@ tourist_df["color"] = tourist_df["type"].map(TYPE_COLORS)
 # ------------------ 페이지 선택 (상단 가로 버튼) ------------------
 page = st.radio("페이지 선택", ["호텔 정보", "관광지 보기"], horizontal=True)
 
-# ------------------ 호텔 정보 페이지 ------------------
+# -------------------------------------------
+# API: 관광지 상세 설명 가져오기(detailCommon2)
+# -------------------------------------------
+def get_tourist_detail(api_key, content_id, content_type_id):
+    url = "http://apis.data.go.kr/B551011/EngService2/detailCommon2"
+    params = {
+        "ServiceKey": api_key,
+        "MobileOS": "ETC",
+        "MobileApp": "hotel_app",
+        "contentId": content_id,
+        "contentTypeId": content_type_id,
+        "overviewYN": "Y",
+        "_type": "json"
+    }
+    try:
+        res = requests.get(url, params=params)
+        data = res.json()
+        items = data["response"]["body"]["items"]["item"]
+        return items.get("overview", "No details available.")
+    except:
+        return "No details available."
+
+
+# -------------------------------------------
+# API: 호텔 이미지 리스트 가져오기(detailImage2)
+# -------------------------------------------
 def get_hotel_images(api_key, content_id):
-    """detailImage2 API로 호텔 이미지 목록 불러오기"""
     url = "http://apis.data.go.kr/B551011/EngService2/detailImage2"
     params = {
         "ServiceKey": api_key,
         "MobileOS": "ETC",
-        "MobileApp": "hotel_analysis",
+        "MobileApp": "hotel_app",
         "contentId": content_id,
         "imageYN": "Y",
         "_type": "json"
@@ -100,54 +124,84 @@ def get_hotel_images(api_key, content_id):
     except:
         return []
 
+
+# -------------------------------------------
+# ③ 호텔 리뷰/후기 요약 (Google Maps 리뷰 기반)
+# -------------------------------------------
+def summarize_reviews(reviews):
+    """리뷰 텍스트 여러 개를 받아 요약 생성"""
+    if not reviews:
+        return "리뷰 정보를 불러올 수 없습니다."
+    
+    joined = " ".join(reviews)
+    # 간단한 Streamlit 내 요약(규칙 기반)
+    return f"""
+- 긍정적인 리뷰 수: {sum('good' in r.lower() or 'clean' in r.lower() for r in reviews)}
+- 부정적인 리뷰 수: {sum('bad' in r.lower() or 'dirty' in r.lower() for r in reviews)}
+- 전체 요약: 전반적으로 '{hotel_info['name']}'에 대한 만족도는 양호하며, 청결/위치 관련 언급이 많습니다.
+    """
+
+
+# -------------------------------------------
+# ---------- 호텔 정보 페이지 UI -----------
+# -------------------------------------------
 if page == "호텔 정보":
+
     st.subheader("🏨 선택 호텔 상세 정보")
 
-    # 기본 정보 출력
+    # 기본 정보
     st.markdown(f"""
     **호텔명:** {hotel_info['name']}  
-    **주소:** {hotel_info.get('address1','')}{(' ' + hotel_info.get('address2','')) if hotel_info.get('address2') else ''}  
+    **주소:** {hotel_info.get('address1','')} {hotel_info.get('address2','')}  
     **연락처:** {hotel_info.get('telephone', '정보 없음')}  
     **평균 가격:** {hotel_info['price']:,}원  
     **평점:** ⭐ {hotel_info['rating']}  
-    """, unsafe_allow_html=True)
+    """)
 
-    # ------------------ 1) 호텔 이미지 갤러리 ------------------
+    # ---------------- ① 호텔 이미지 갤러리 ----------------
     st.markdown("### 📷 호텔 이미지")
     images = get_hotel_images(api_key, hotel_info["contentid"])
-
     if images:
-        st.image(images, width=300, caption=[f"Image {i+1}" for i in range(len(images))])
+        st.image(images, width=300)
     else:
-        st.write("이미지 정보를 불러올 수 없습니다.")
+        st.write("이미지 없음")
 
-    # ------------------ 2) 주변 관광지 Top5 ------------------
-    if not tourist_df.empty:
-        tourist_df["dist"] = np.sqrt(
-            (tourist_df["lat"] - hotel_info["lat"])**2 + 
-            (tourist_df["lng"] - hotel_info["lng"])**2
-        )
-        top5 = tourist_df.sort_values("dist").head(5)
+    # ---------------- ② 주변 관광지 Top5 (숙박 제외) ----------------
+    st.markdown("### 🗺 주변 관광지 Top 5 (숙박 시설 제외)")
 
-        st.markdown("### 🗺 주변 관광지 Top5 (가까운 순)")
-        for _, row in top5.iterrows():
-            st.write(f"- **{row['name']}** ({row['type_name']})")
+    # contenttypeid != 32 → 숙박업 제거
+    tourist_df_filtered = tourist_df[tourist_df["contenttypeid"] != 32]
 
-    # ------------------ 3) AI 호텔 소개 ------------------
-    st.markdown("### 🤖 호텔 요약 설명 (AI)")
-    hotel_summary = f"""
-    {hotel_info['name']} 호텔은 서울 내 주요 관광지와 가까운 위치에 있으며,
-    평균 가격은 {hotel_info['price']:,}원, 평점은 {hotel_info['rating']}점입니다.
-    주변 {radius_m}m 반경에는 다양한 관광지와 편의시설이 있어 여행객에게 적합한 숙소입니다.
-    """
+    tourist_df_filtered["dist"] = np.sqrt(
+        (tourist_df_filtered["lat"] - hotel_info["lat"])**2 +
+        (tourist_df_filtered["lng"] - hotel_info["lng"])**2
+    )
 
-    st.info(hotel_summary)
+    top5 = tourist_df_filtered.sort_values("dist").head(5)
 
-    # ------------------ 4) 예약 링크 (호텔명 기반) ------------------
+    for idx, row in top5.iterrows():
+        overview = get_tourist_detail(api_key, row["contentid"], row["contenttypeid"])
+
+        with st.expander(f"{row['name']} ({row['type_name']}) — {round(row['dist']*111000)}m"):
+            st.write(overview)
+
+    # ---------------- ③ 리뷰 요약 ----------------
+    st.markdown("### ⭐ 호텔 리뷰 요약")
+
+    # 예시: Google 리뷰 가정(나중에 실제 API 연결 가능)
+    dummy_reviews = [
+        "Good location and very clean rooms",
+        "Bad smell in the hallway",
+        "Very friendly staff and good breakfast",
+        "Room was a bit dirty but overall fine"
+    ]
+
+    summary = summarize_reviews(dummy_reviews)
+    st.info(summary)
+
+    # ---------------- 예약 링크 ----------------
     booking_url = f"https://www.booking.com/searchresults.ko.html?ss={hotel_info['name'].replace(' ', '+')}"
-    st.markdown(f"### 🔗 예약하러 가기")
-    st.markdown(f"[👉 Booking.com에서 '{hotel_info['name']}' 검색하기]({booking_url})")
-
+    st.markdown(f"[👉 '{hotel_info['name']}' 예약하러 가기]({booking_url})")
 
 
 # ------------------ 관광지 보기 페이지 ------------------
