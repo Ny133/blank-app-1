@@ -124,16 +124,32 @@ folium.Marker(
 
 # 관광지 마커 표시
 for i, row in tourist_df.iterrows():
-    highlight = (i == selected_idx)
+    icon_color = TYPE_COLORS.get(row["type"], "black")
 
-    folium.CircleMarker(
-        location=[row['lat'], row['lng']],
-        radius=8 if highlight else 5,
-        color="yellow" if highlight else color_map.get(row['type_name'], "blue"),
-        fill=True,
-        fill_opacity=1 if highlight else 0.7,
-        popup=f"{row['title']} ({row['type_name']})"
-    ).add_to(m)
+    # 선택된 관광지는 강조 (노란색 + 크기 확대)
+    if row["name"] == selected_spot:
+        folium.Marker(
+            location=[row["lat"], row["lng"]],
+            popup=row["name"],
+            icon=folium.Icon(color="lightgray", icon="info-sign")
+        ).add_to(m)
+        folium.CircleMarker(
+            location=[row["lat"], row["lng"]],
+            radius=10,
+            color="yellow",
+            fill=True,
+            fill_color="yellow",
+            fill_opacity=0.7
+        ).add_to(m)
+    else:
+        folium.Marker(
+            location=[row["lat"], row["lng"]],
+            popup=row["name"],
+            icon=folium.Icon(color=icon_color, icon="info-sign")
+        ).add_to(m)
+
+st.subheader(f"{selected_hotel} 주변 관광지 지도")
+st_folium(m, width=700, height=500)
 
 
 # ------------------ 예쁜 표로 목록 출력 ------------------ #
