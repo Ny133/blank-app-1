@@ -12,10 +12,10 @@ api_key = "f0e46463ccf90abd0defd9c79c8568e922e07a835961b1676cdb2065ecc23494"
 radius_m = st.slider("관광지 반경 (m)", 500, 2000, 1000, step=100)
 
 # ------------------ 타입 컬러/이름 ------------------
-TYPE_COLORS = {75: "green", 76: "blue", 77: "gray", 78: "purple",
-               79: "orange", 82: "pink", 85: "cadetblue"}
+TYPE_COLORS = {75: "green", 76: "blue", 77: "skyblue", 78: "purple",
+               79: "orange", 80: "gray", 82: "pink", 85: "cadetblue"}
 TYPE_NAMES = {75: "레포츠", 76: "관광지", 77: "교통", 78: "문화시설",
-              79: "쇼핑",  82: "음식점", 85: "축제/공연/행사"}
+              79: "쇼핑", 80: "다른 숙박지", 82: "음식점", 85: "축제/공연/행사"}
 
 # ------------------ 호텔 데이터 ------------------
 @st.cache_data(ttl=3600)
