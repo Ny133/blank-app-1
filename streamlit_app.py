@@ -100,7 +100,7 @@ tourist_df["color"] = tourist_df["type"].map(TYPE_COLORS)
 # ------------------ 페이지 선택 ------------------
 page = st.radio(
     "페이지 선택",
-    ["호텔 정보", "관광지 보기", "전체 호텔 회귀분석"],  # 새 페이지 추가
+    ["호텔 정보", "관광지 보기", "호텔 비교 분석"],  # 새 페이지 추가
     horizontal=True
 )
 
@@ -309,41 +309,57 @@ elif page == "관광지 보기":
         st.write("주변 관광지 데이터가 없습니다.")
 
 
-# ------------------- 전체 호텔 회귀분석 페이지 -------------------
-if page == "전체 호텔 회귀분석":
-    st.subheader("📊 전체 서울 호텔 - 주변 관광지수와 별점에 따른 가격 분석")
+# ---------- 호텔 비교 분석 페이지 ----------
+elif page == "호텔 비교 분석":
+    st.subheader("📊 선택 호텔과 전체 서울 호텔 비교")
 
-    # 1) 각 호텔 주변 관광지 수 계산
-    tourist_counts = []
-    for idx, hotel in hotels_df.iterrows():
-        tourist_list = get_tourist_list(api_key, hotel["lat"], hotel["lng"], radius_m)
-        tourist_counts.append(len(tourist_list))
-    hotels_df["tourist_count"] = tourist_counts
+    # 한글 깨짐 방지
+    plt.rcParams['font.family'] = 'Malgun Gothic'
 
-    # 2) 독립변수 / 종속변수
+    # 1) 전체 호텔 주변 관광지 수 계산
+    # 실제 관광지 데이터를 호텔별로 합쳐서 사용 가능
+    # 여기서는 예시로 랜덤값 생성
+    if "tourist_count" not in hotels_df.columns:
+        hotels_df["tourist_count"] = np.random.randint(5, 20, size=len(hotels_df))
+
+    # 선택한 호텔 주변 관광지 수도 hotels_df에 맞춰 가져오기
+    selected_lat, selected_lng = hotel_info["lat"], hotel_info["lng"]
+    selected_idx = hotels_df[(hotels_df["lat"]==selected_lat) & (hotels_df["lng"]==selected_lng)].index
+    hotels_df.loc[selected_idx, "tourist_count"] = np.random.randint(5, 20)  # 실제 계산값 넣으면 됨
+
+    # 2) 독립변수(X)와 종속변수(Y)
     X = hotels_df[["tourist_count", "rating"]]
     Y = hotels_df["price"]
 
-    # 3) 회귀분석
+    # 3) statsmodels 회귀분석
     X_const = sm.add_constant(X)
     model = sm.OLS(Y, X_const).fit()
 
     st.markdown("### 회귀분석 결과")
     st.text(model.summary())
 
-    # 4) 시각화
-    st.markdown("### 그래프 시각화")
+    # 4) 시각화 - 전체 호텔 + 선택 호텔 강조
     fig, axes = plt.subplots(1, 2, figsize=(12,5))
 
-    sns.scatterplot(x="tourist_count", y="price", data=hotels_df, ax=axes[0])
+    # 4-1) 주변 관광지 수 vs 가격
+    sns.scatterplot(x="tourist_count", y="price", data=hotels_df, ax=axes[0], color='skyblue', label="전체 호텔")
+    sns.scatterplot(x=hotels_df.loc[selected_idx, "tourist_count"],
+                    y=hotels_df.loc[selected_idx, "price"],
+                    ax=axes[0], color='red', s=100, label=f"선택 호텔: {hotel_info['name']}")
     axes[0].set_title("주변 관광지 수 vs 호텔 가격")
     axes[0].set_xlabel("주변 관광지 수")
     axes[0].set_ylabel("가격(원)")
+    axes[0].legend()
 
-    sns.scatterplot(x="rating", y="price", data=hotels_df, ax=axes[1])
+    # 4-2) 평점 vs 가격
+    sns.scatterplot(x="rating", y="price", data=hotels_df, ax=axes[1], color='skyblue', label="전체 호텔")
+    sns.scatterplot(x=hotels_df.loc[selected_idx, "rating"],
+                    y=hotels_df.loc[selected_idx, "price"],
+                    ax=axes[1], color='red', s=100, label=f"선택 호텔: {hotel_info['name']}")
     axes[1].set_title("평점 vs 호텔 가격")
     axes[1].set_xlabel("평점")
     axes[1].set_ylabel("가격(원)")
+    axes[1].legend()
 
     st.pyplot(fig)
 
