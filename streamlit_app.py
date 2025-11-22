@@ -167,8 +167,8 @@ for _, row in tourist_df.iterrows():
                 icon=icon_name,
                 icon_shape="marker",
                 border_color=row["color"],
-                text_color=row["color"],
-                background_color="white",
+                text_color="white",
+                background_color=row["color"],
                 prefix="fa",
                 icon_size=[20, 20],  # 조금 키움
                 inner_icon_style="margin:0px;"
