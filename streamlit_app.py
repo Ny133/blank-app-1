@@ -9,6 +9,12 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 
+# ---------- 한글 폰트 설정 ----------
+plt.rcParams['font.family'] = 'Malgun Gothic'   # Windows
+plt.rcParams['axes.unicode_minus'] = False
+sns.set(font='Malgun Gothic', rc={'axes.unicode_minus':False})
+
+
 st.set_page_config(layout="wide")
 st.title("🏨 서울 호텔 + 주변 관광지 시각화")
 st.markdown("""
@@ -93,11 +99,10 @@ tourist_df["color"] = tourist_df["type"].map(TYPE_COLORS)
 
 # ------------------ 페이지 선택 ------------------
 page = st.radio(
-    "페이지 선택", 
-    ["호텔 정보", "관광지 보기", "주변 관광지수와 별점에 따른 호텔 가격"],
+    "페이지 선택",
+    ["호텔 정보", "관광지 보기", "전체 호텔 회귀분석"],  # 새 페이지 추가
     horizontal=True
 )
-
 
 # ------------------ 호텔 이미지 ------------------
 def get_hotel_images(api_key, content_id):
@@ -304,42 +309,38 @@ elif page == "관광지 보기":
         st.write("주변 관광지 데이터가 없습니다.")
 
 
+# ------------------- 전체 호텔 회귀분석 페이지 -------------------
+if page == "전체 호텔 회귀분석":
+    st.subheader("📊 전체 서울 호텔 - 주변 관광지수와 별점에 따른 가격 분석")
 
-# ---------- 회귀 분석 페이지 ----------
-elif page == "주변 관광지수와 별점에 따른 호텔 가격":
-    st.subheader("📊 주변 관광지수와 별점에 따른 호텔 가격 분석")
+    # 1) 각 호텔 주변 관광지 수 계산
+    tourist_counts = []
+    for idx, hotel in hotels_df.iterrows():
+        tourist_list = get_tourist_list(api_key, hotel["lat"], hotel["lng"], radius_m)
+        tourist_counts.append(len(tourist_list))
+    hotels_df["tourist_count"] = tourist_counts
 
-    # 1) 호텔별 주변 관광지 수 계산
-    tourist_count_df = tourist_df.groupby("lat").size().reset_index(name="tourist_count")
-    hotels_with_count = hotels_df.merge(
-        tourist_count_df, 
-        left_on=["lat","lng"], 
-        right_on=["lat","lat"], 
-        how="left"
-    )
-    hotels_with_count["tourist_count"] = hotels_with_count["tourist_count"].fillna(0)
+    # 2) 독립변수 / 종속변수
+    X = hotels_df[["tourist_count", "rating"]]
+    Y = hotels_df["price"]
 
-    # 2) 독립변수(X)와 종속변수(Y)
-    X = hotels_with_count[["tourist_count", "rating"]]
-    Y = hotels_with_count["price"]
-
-    # 3) statsmodels 회귀분석
-    X_const = sm.add_constant(X)  # 상수항 추가
+    # 3) 회귀분석
+    X_const = sm.add_constant(X)
     model = sm.OLS(Y, X_const).fit()
 
     st.markdown("### 회귀분석 결과")
     st.text(model.summary())
 
-    # 4) 시각화 (관광지 수 vs 가격, 평점 vs 가격)
+    # 4) 시각화
     st.markdown("### 그래프 시각화")
     fig, axes = plt.subplots(1, 2, figsize=(12,5))
 
-    sns.scatterplot(x="tourist_count", y="price", data=hotels_with_count, ax=axes[0])
+    sns.scatterplot(x="tourist_count", y="price", data=hotels_df, ax=axes[0])
     axes[0].set_title("주변 관광지 수 vs 호텔 가격")
     axes[0].set_xlabel("주변 관광지 수")
     axes[0].set_ylabel("가격(원)")
 
-    sns.scatterplot(x="rating", y="price", data=hotels_with_count, ax=axes[1])
+    sns.scatterplot(x="rating", y="price", data=hotels_df, ax=axes[1])
     axes[1].set_title("평점 vs 호텔 가격")
     axes[1].set_xlabel("평점")
     axes[1].set_ylabel("가격(원)")
