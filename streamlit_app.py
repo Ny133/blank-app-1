@@ -23,9 +23,10 @@ TYPE_NAMES = {75: "레포츠", 76: "관광지", 77: "교통", 78: "문화시설"
 
 TYPE_ICONS = {75: "fire", 76: "flag", 77: "plane", 78: "camera",
               79: "shopping-cart", 80: "home", 82: "cutlery", 85: "music"}
-# -------------------------------------------
-# 🏨 호텔 상세 정보 주소/연락처 가져오기 (detailCommon2)
-# -------------------------------------------
+
+# -------------------------------------------------------
+# 🏨 호텔 상세 정보 (주소·연락처 확실하게 가져오기)
+# -------------------------------------------------------
 def get_hotel_detail(api_key, content_id):
     url = "http://apis.data.go.kr/B551011/EngService2/detailCommon2"
     params = {
@@ -33,7 +34,7 @@ def get_hotel_detail(api_key, content_id):
         "MobileOS": "ETC",
         "MobileApp": "hotel_app",
         "contentId": content_id,
-        "contentTypeId": 32,  # 숙박 시설
+        "contentTypeId": 32,
         "overviewYN": "Y",
         "addrinfoYN": "Y",
         "defaultYN": "Y",
@@ -43,55 +44,100 @@ def get_hotel_detail(api_key, content_id):
         res = requests.get(url, params=params)
         data = res.json()
         item = data["response"]["body"]["items"]["item"]
-        return {
-            "addr1": item.get("addr1", ""),
-            "addr2": item.get("addr2", ""),
-            "tel": item.get("tel", "정보 없음")
-        }
-    except:
-        return {"addr1": "", "addr2": "", "tel": "정보 없음"}
 
-# ------------------ 호텔 데이터 ------------------
+        # 주소 후보 리스트
+        address = (
+            item.get("addr1") or
+            item.get("addr") or
+            item.get("address") or
+            item.get("addr2") or
+            "정보 없음"
+        )
+
+        # 연락처 후보 리스트
+        phone = (
+            item.get("tel") or
+            item.get("telname") or
+            item.get("phone") or
+            "정보 없음"
+        )
+
+        return {"address": address, "phone": phone}
+
+    except:
+        return {"address": "정보 없음", "phone": "정보 없음"}
+
+
+# -------------------------------------------------------
+# 검색된 호텔 목록 가져오기(searchStay2)
+# -------------------------------------------------------
 @st.cache_data(ttl=3600)
 def get_hotels(api_key):
     url = "http://apis.data.go.kr/B551011/EngService2/searchStay2"
-    params = {"ServiceKey": api_key, "numOfRows": 50, "pageNo": 1,
-              "MobileOS": "ETC", "MobileApp": "hotel_analysis",
-              "arrange": "A", "_type": "json", "areaCode": 1}
+    params = {
+        "ServiceKey": api_key,
+        "numOfRows": 50,
+        "pageNo": 1,
+        "MobileOS": "ETC",
+        "MobileApp": "hotel_analysis",
+        "arrange": "A",
+        "_type": "json",
+        "areaCode": 1
+    }
     res = requests.get(url, params=params)
     data = res.json()
+
     items = data['response']['body']['items']['item']
     df = pd.DataFrame(items)
+
     df = df.rename(columns={"title": "name", "mapy": "lat", "mapx": "lng"})
+
     df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
     df["lng"] = pd.to_numeric(df["lng"], errors="coerce")
-    df = df.dropna(subset=["lat","lng"])
+    df = df.dropna(subset=["lat", "lng"])
+
+    # Dummy price & rating
     df["price"] = np.random.randint(150000, 300000, size=len(df))
-    df["rating"] = np.random.uniform(3.0,5.0, size=len(df)).round(1)
+    df["rating"] = np.random.uniform(3.0, 5.0, size=len(df)).round(1)
+
     return df
 
 hotels_df = get_hotels(api_key)
 selected_hotel = st.selectbox("호텔 선택", hotels_df["name"])
-hotel_info = hotels_df[hotels_df["name"]==selected_hotel].iloc[0]
+hotel_info = hotels_df[hotels_df["name"] == selected_hotel].iloc[0]
 
-# ------------------ 관광지 데이터 ------------------
+
+# -------------------------------------------------------
+# 🎯 주변 관광지 목록 가져오기 (locationBasedList2)
+# -------------------------------------------------------
 @st.cache_data(ttl=3600)
 def get_tourist_list(api_key, lat, lng, radius_m):
     url = "http://apis.data.go.kr/B551011/EngService2/locationBasedList2"
-    params = {"ServiceKey": api_key, "numOfRows": 200, "pageNo":1,
-              "MobileOS":"ETC","MobileApp":"hotel_analysis",
-              "mapX":lng,"mapY":lat,"radius":radius_m,"arrange":"A","_type":"json"}
+    params = {
+        "ServiceKey": api_key,
+        "numOfRows": 200,
+        "pageNo": 1,
+        "MobileOS": "ETC",
+        "MobileApp": "hotel_analysis",
+        "mapX": lng,
+        "mapY": lat,
+        "radius": radius_m,
+        "arrange": "A",
+        "_type": "json"
+    }
     try:
         res = requests.get(url, params=params)
         data = res.json()
         items = data["response"]["body"]["items"]["item"]
+
         results = []
         for t in items if isinstance(items, list) else [items]:
             results.append({
-                "name": t.get("title",""),
-                "lat": float(t.get("mapy",0)),
-                "lng": float(t.get("mapx",0)),
-                "type": int(t.get("contenttypeid",0)),
+                "name": t.get("title", ""),
+                "lat": float(t.get("mapy", 0)),
+                "lng": float(t.get("mapx", 0)),
+                "contentid": t.get("contentid"),
+                "type": int(t.get("contenttypeid", 0)),
             })
         return results
     except:
@@ -102,12 +148,10 @@ tourist_df = pd.DataFrame(tourist_list)
 tourist_df["type_name"] = tourist_df["type"].map(TYPE_NAMES)
 tourist_df["color"] = tourist_df["type"].map(TYPE_COLORS)
 
-# ------------------ 페이지 선택 (상단 가로 버튼) ------------------
-page = st.radio("페이지 선택", ["호텔 정보", "관광지 보기"], horizontal=True)
 
-# -------------------------------------------
-# API: 관광지 상세 설명 가져오기(detailCommon2)
-# -------------------------------------------
+# -------------------------------------------------------
+# 관광지 상세 설명 API (detailCommon2)
+# -------------------------------------------------------
 def get_tourist_detail(api_key, content_id, content_type_id):
     url = "http://apis.data.go.kr/B551011/EngService2/detailCommon2"
     params = {
@@ -122,15 +166,15 @@ def get_tourist_detail(api_key, content_id, content_type_id):
     try:
         res = requests.get(url, params=params)
         data = res.json()
-        items = data["response"]["body"]["items"]["item"]
-        return items.get("overview", "No details available.")
+        item = data["response"]["body"]["items"]["item"]
+        return item.get("overview", "상세 설명 없음")
     except:
-        return "No details available."
+        return "상세 설명 없음"
 
 
-# -------------------------------------------
-# API: 호텔 이미지 리스트 가져오기(detailImage2)
-# -------------------------------------------
+# -------------------------------------------------------
+# 호텔 이미지(detailImage2)
+# -------------------------------------------------------
 def get_hotel_images(api_key, content_id):
     url = "http://apis.data.go.kr/B551011/EngService2/detailImage2"
     params = {
@@ -145,184 +189,136 @@ def get_hotel_images(api_key, content_id):
         res = requests.get(url, params=params)
         data = res.json()
         items = data["response"]["body"]["items"]["item"]
+
         if isinstance(items, dict):
             return [items.get("originimgurl")]
+
         return [i.get("originimgurl") for i in items if i.get("originimgurl")]
     except:
         return []
 
 
-# -------------------------------------------
-# ③ 호텔 리뷰/후기 요약 (Google Maps 리뷰 기반)
-# -------------------------------------------
-def summarize_reviews(reviews):
-    """리뷰 텍스트 여러 개를 받아 요약 생성"""
-    if not reviews:
-        return "리뷰 정보를 불러올 수 없습니다."
-    
-    joined = " ".join(reviews)
-    # 간단한 Streamlit 내 요약(규칙 기반)
-    return f"""
-- 긍정적인 리뷰 수: {sum('good' in r.lower() or 'clean' in r.lower() for r in reviews)}
-- 부정적인 리뷰 수: {sum('bad' in r.lower() or 'dirty' in r.lower() for r in reviews)}
-- 전체 요약: 전반적으로 '{hotel_info['name']}'에 대한 만족도는 양호하며, 청결/위치 관련 언급이 많습니다.
-    """
+# -------------------------------------------------------
+# 🎨 페이지 선택
+# -------------------------------------------------------
+page = st.radio("페이지 선택", ["호텔 정보", "관광지 보기"], horizontal=True)
 
 
-# ---------- 호텔 정보 페이지 UI -----------
+# -------------------------------------------------------
+# 📌 호텔 정보 페이지
+# -------------------------------------------------------
 if page == "호텔 정보":
-
     st.subheader("🏨 선택 호텔 상세 정보")
 
-    # 주소/연락처 가져오기
     detail_info = get_hotel_detail(api_key, hotel_info["contentid"])
 
     st.markdown(f"""
     **호텔명:** {hotel_info['name']}  
-    **주소:** {detail_info['addr1']} {detail_info['addr2']}  
-    **연락처:** {detail_info['tel']}  
+    **주소:** {detail_info['address']}  
+    **연락처:** {detail_info['phone']}  
     **평균 가격:** {hotel_info['price']:,}원  
     **평점:** ⭐ {hotel_info['rating']}  
     """)
 
-    # ---------------- ① 호텔 이미지 갤러리 ----------------
+    # ---------------- 이미지 갤러리 ----------------
     st.markdown("### 📷 호텔 이미지")
     images = get_hotel_images(api_key, hotel_info["contentid"])
+
     if images:
         st.image(images, width=300)
     else:
         st.write("이미지 없음")
 
-    # ---------------- ② 주변 관광지 Top5 (숙박 제외) ----------------
+    # ---------------- Top5 관광지 ----------------
     st.markdown("### 🗺 주변 관광지 Top 5 (숙박 제외)")
 
-    # 숙박(80번) 제외
     tourist_df_filtered = tourist_df[tourist_df["type"] != 80]
 
     # 거리 계산
     tourist_df_filtered["dist"] = np.sqrt(
-        (tourist_df_filtered["lat"] - hotel_info["lat"])**2 +
-        (tourist_df_filtered["lng"] - hotel_info["lng"])**2
+        (tourist_df_filtered["lat"] - hotel_info["lat"]) ** 2 +
+        (tourist_df_filtered["lng"] - hotel_info["lng"]) ** 2
     )
 
-    # 가까운 순으로 5개
     top5 = tourist_df_filtered.sort_values("dist").head(5)
 
     for _, row in top5.iterrows():
         st.write(f"- **{row['name']}** ({row['type_name']})")
 
-    # ---------------- ③ 리뷰 요약 ----------------
-    st.markdown("### ⭐ 호텔 리뷰 요약")
-
-    dummy_reviews = [
-        "Good location and very clean rooms",
-        "Bad smell in the hallway",
-        "Very friendly staff and good breakfast",
-        "Room was a bit dirty but overall fine"
-    ]
-    summary = summarize_reviews(dummy_reviews)
-    st.info(summary)
-
-    # ---------------- 예약 링크 ----------------
+    # 예약 링크
     booking_url = f"https://www.booking.com/searchresults.ko.html?ss={hotel_info['name'].replace(' ', '+')}"
     st.markdown(f"[👉 '{hotel_info['name']}' 예약하러 가기]({booking_url})")
 
 
-# ------------------ 관광지 보기 페이지 ------------------
+# -------------------------------------------------------
+# 📌 관광지 보기 페이지
+# -------------------------------------------------------
 elif page == "관광지 보기":
     st.subheader("📍 호텔 주변 관광지 보기")
-    
-    col1, col2 = st.columns([2,1])
-    
+
+    col1, col2 = st.columns([2, 1])
+
+    # ---------------- 지도 ----------------
     with col1:
-        st.markdown("### 지도")
         m = folium.Map(location=[hotel_info["lat"], hotel_info["lng"]], zoom_start=15)
-        
-        # 호텔 마커
+
         folium.Marker(
-            location=[hotel_info['lat'], hotel_info['lng']],
-            popup=f"{hotel_info['name']} | 가격: {hotel_info['price']} | 별점: {hotel_info['rating']}",
-            icon=folium.Icon(color='red', icon='hotel', prefix='fa')
+            location=[hotel_info["lat"], hotel_info["lng"]],
+            popup=hotel_info["name"],
+            icon=folium.Icon(color="red", icon="hotel", prefix="fa")
         ).add_to(m)
-        
-        # 관광지 선택 UI
-        category_list = ["선택 안 함"] + tourist_df["type_name"].unique().tolist()
+
+        # 카테고리 선택
+        category_list = ["선택 안 함"] + tourist_df["type_name"].dropna().unique().tolist()
         selected_category = st.selectbox("관광지 분류 선택", category_list)
         selected_spot = None
-        
+
         if selected_category != "선택 안 함":
-            filtered = tourist_df[tourist_df["type_name"] == selected_category]
-            spot_list = ["선택 안 함"] + filtered["name"].tolist()
-            selected_name = st.selectbox(f"{selected_category} 내 관광지 선택", spot_list)
+            group = tourist_df[tourist_df["type_name"] == selected_category]
+            spot_list = ["선택 안 함"] + group["name"].tolist()
+            selected_name = st.selectbox(f"{selected_category} 선택", spot_list)
+
             if selected_name != "선택 안 함":
-                selected_spot = filtered[filtered["name"] == selected_name].iloc[0]
-        
-        # 관광지 마커 표시
+                selected_spot = group[group["name"] == selected_name].iloc[0]
+
         for _, row in tourist_df.iterrows():
             highlight = selected_spot is not None and row["name"] == selected_spot["name"]
             icon_name = TYPE_ICONS.get(row["type"], "info-sign")
-            
+
             if highlight:
-                folium.Marker(
-                    location=[row["lat"], row["lng"]],
-                    popup=f"{row['name']} ({row['type_name']})",
-                    icon=BeautifyIcon(
-                        icon="star", icon_shape="marker",
-                        border_color="yellow", text_color="white", background_color="yellow",
-                        prefix="fa", icon_size=[30,30]
-                    )
-                ).add_to(m)
+                icon = BeautifyIcon(
+                    icon="star", icon_shape="marker",
+                    border_color="yellow", background_color="yellow",
+                    text_color="white")
             else:
-                folium.Marker(
-                    location=[row["lat"], row["lng"]],
-                    popup=f"{row['name']} ({row['type_name']})",
-                    icon=BeautifyIcon(
-                        icon=icon_name, icon_shape="circle",
-                        border_color=row["color"], text_color="white", background_color=row["color"],
-                        prefix="fa", icon_size=[20,20]
-                    )
-                ).add_to(m)
-        
-        # 선택 관광지 중심 이동
+                icon = BeautifyIcon(
+                    icon=icon_name, icon_shape="circle",
+                    border_color=row["color"], background_color=row["color"],
+                    text_color="white")
+
+            folium.Marker(
+                location=[row["lat"], row["lng"]],
+                popup=row["name"],
+                icon=icon
+            ).add_to(m)
+
         if selected_spot is not None:
             m.location = [selected_spot["lat"], selected_spot["lng"]]
             m.zoom_start = 17
-        
-        # 범례
-        legend_html = """
-        <div style="
-            position: fixed;
-            top: 80px;
-            right: 10px;
-            width: 180px;
-            background-color: white;
-            border:2px solid grey;
-            z-index:9999;
-            font-size:14px;
-            padding: 10px;
-            box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-        ">
-        <b>[관광지 범례]</b><br>
-        """
-        for t_type, color in TYPE_COLORS.items():
-            icon = TYPE_ICONS.get(t_type, "info-sign")
-            name = TYPE_NAMES.get(t_type, "")
-            legend_html += f"""<i class="fa fa-{icon}" style="color:{color}; margin-right:5px;"></i> {name} <br>"""
-        legend_html += """<i class="fa fa-star" style="color:yellow; margin-right:5px;"></i> 선택 관광지<br>"""
-        legend_html += """<i class="fa fa-hotel" style="color:red; margin-right:5px;"></i> 호텔<br></div>"""
-        m.get_root().html.add_child(folium.Element(legend_html))
-        
+
         st_folium(m, width=700, height=550)
-    
+
+    # ---------------- 목록 UI ----------------
     with col2:
         st.markdown("### 관광지 목록")
         if not tourist_df.empty:
             for t_type, group in tourist_df.groupby("type_name"):
                 st.markdown(f"#### {t_type}")
-                display_df = group[["name","color"]].rename(columns={"name":"관광지명","color":"색상"})
-                display_df["색상"] = display_df["색상"].apply(
+                display_df = group[["name", "color"]].copy()
+                display_df["색상"] = display_df["color"].apply(
                     lambda x: f'<div style="width:40px; height:15px; background:{x}; border:1px solid #000;"></div>'
                 )
+                display_df = display_df.drop(columns=["color"])
                 st.write(display_df.to_html(index=False, escape=False), unsafe_allow_html=True)
         else:
             st.write("주변 관광지 데이터가 없습니다.")
