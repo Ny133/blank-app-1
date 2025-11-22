@@ -9,9 +9,9 @@ st.set_page_config(layout="wide")
 st.title("🏨 서울 호텔 + 주변 관광지 시각화")
 
 # 🔑 API Key
-api_key = "f0e46463ccf90abd0defd9c79c8568e922e07a835961b1676cdb2065ecc23494"
+api_key = "인증키"
 
-# 반경 설정
+# 관광지 검색 반경
 radius_m = st.slider("관광지 반경 (m)", 500, 2000, 1000, step=100)
 
 # -----------------------------------
@@ -34,22 +34,21 @@ def get_hotels(api_key):
     data = res.json()
     items = data['response']['body']['items']['item']
     df = pd.DataFrame(items)
-
-    df = df[['title', 'mapx', 'mapy']].rename(columns={'title':'name','mapx':'lng','mapy':'lat'})
+    
+    df = df[['title','mapx','mapy']].rename(columns={'title':'name','mapx':'lng','mapy':'lat'})
     df['lat'] = pd.to_numeric(df['lat'], errors='coerce')
     df['lng'] = pd.to_numeric(df['lng'], errors='coerce')
     df = df.dropna(subset=['lat','lng'])
-
-    # 가짜 데이터
+    
+    # 가짜 가격/평점
     df['price'] = np.random.randint(150000, 300000, size=len(df))
-    df['rating'] = np.random.uniform(3.0, 5.0, size=len(df)).round(1)
+    df['rating'] = np.random.uniform(3.0,5.0, size=len(df)).round(1)
     return df
 
 hotels_df = get_hotels(api_key)
 
 # 호텔 선택
-hotel_names = hotels_df['name'].tolist()
-selected_hotel = st.selectbox("호텔 선택", hotel_names)
+selected_hotel = st.selectbox("호텔 선택", hotels_df['name'])
 hotel_info = hotels_df[hotels_df['name']==selected_hotel].iloc[0]
 
 # -----------------------------------
@@ -78,19 +77,15 @@ def get_tourist_list(api_key, lat, lng, radius_m):
         items = [items]
 
     df = pd.DataFrame(items)
-
-    # 좌표 numeric
     df['lat'] = pd.to_numeric(df['mapy'], errors='coerce')
     df['lng'] = pd.to_numeric(df['mapx'], errors='coerce')
 
-    # 분류명 매핑
     type_map = {
         "75":"레포츠", "76":"관광지", "77":"교통",
         "78":"문화시설", "79":"쇼핑", "80":"숙박",
         "82":"음식점", "85":"축제/공연/행사"
     }
     df['type_name'] = df['contenttypeid'].map(type_map)
-
     df = df[['title','lat','lng','type_name','contenttypeid']]
     df = df.dropna(subset=['lat','lng'])
     return df
@@ -98,63 +93,54 @@ def get_tourist_list(api_key, lat, lng, radius_m):
 tour_df = get_tourist_list(api_key, hotel_info['lat'], hotel_info['lng'], radius_m)
 
 # -----------------------------------
-# 3) 관광지 목록 표 표시 + 클릭 선택
+# 3) 관광지 표 + selectbox
 # -----------------------------------
 st.subheader("📋 주변 관광지 목록 (분류 포함)")
+st.dataframe(tour_df[['title','type_name','lat','lng']], use_container_width=True)
 
-selected_spot = st.data_editor(
-    tour_df,
-    use_container_width=True,
-    hide_index=True,
-    selection_mode="single-row"
-)
+tourist_options = ["선택 안 함"] + tour_df['title'].tolist()
+selected_spot_name = st.selectbox("강조할 관광지 선택", tourist_options)
 
-selected_rows = selected_spot["selection"]["rows"]
-if selected_rows:
-    selected_idx = selected_rows[0]
-    spot_info = tour_df.iloc[selected_idx]
+if selected_spot_name != "선택 안 함":
+    spot_info = tour_df[tour_df['title']==selected_spot_name].iloc[0]
 else:
-    selected_idx = None
     spot_info = None
 
 # -----------------------------------
 # 4) 지도 표시
 # -----------------------------------
 st.subheader("🗺️ 지도 시각화")
-
 m = folium.Map(location=[hotel_info['lat'], hotel_info['lng']], zoom_start=15)
 
-# 🔥 호텔 강조 마커 (크게 & 색 선명하게)
+# 호텔 강조
 folium.Marker(
     location=[hotel_info['lat'], hotel_info['lng']],
     popup=f"<b>{hotel_info['name']}</b><br>가격: {hotel_info['price']}<br>별점: {hotel_info['rating']}",
     icon=folium.Icon(color='red', icon='star', prefix='fa')
 ).add_to(m)
 
-
 # 관광지 색상 매핑
 color_map = {
-    "레포츠":"green", "관광지":"blue", "교통":"gray",
-    "문화시설":"purple", "쇼핑":"orange",
-    "숙박":"darkred", "음식점":"pink", "축제/공연/행사":"cadetblue"
+    "레포츠":"green","관광지":"blue","교통":"gray",
+    "문화시설":"purple","쇼핑":"orange",
+    "숙박":"darkred","음식점":"pink","축제/공연/행사":"cadetblue"
 }
 
-# 관광지 마커 표시
 for i, row in tour_df.iterrows():
-    highlight = (i == selected_idx)
-
+    highlight = (spot_info is not None) and (row['title']==spot_info['title'])
     folium.CircleMarker(
         location=[row['lat'], row['lng']],
-        radius=8 if highlight else 5,
-        color="yellow" if highlight else color_map.get(row['type_name'], "blue"),
+        radius=10 if highlight else 5,
+        color="yellow" if highlight else color_map.get(row['type_name'],"blue"),
         fill=True,
-        fill_opacity=1 if highlight else 0.7,
+        fill_color="yellow" if highlight else color_map.get(row['type_name'],"blue"),
+        fill_opacity=0.7 if not highlight else 1,
         popup=f"{row['title']} ({row['type_name']})"
     ).add_to(m)
 
-# 특정 관광지 선택 시 → 지도 중심 이동
+# 선택된 관광지 중심으로 이동
 if spot_info is not None:
-    m.location = [spot_info["lat"], spot_info["lng"]]
+    m.location = [spot_info['lat'], spot_info['lng']]
     m.zoom_start = 17
 
 st_folium(m, width=900, height=550, returned_objects=[])
