@@ -142,14 +142,11 @@ def summarize_reviews(reviews):
     """
 
 
-# -------------------------------------------
 # ---------- 호텔 정보 페이지 UI -----------
-# -------------------------------------------
 if page == "호텔 정보":
 
     st.subheader("🏨 선택 호텔 상세 정보")
 
-    # 기본 정보
     st.markdown(f"""
     **호텔명:** {hotel_info['name']}  
     **주소:** {hotel_info.get('address1','')} {hotel_info.get('address2','')}  
@@ -166,36 +163,29 @@ if page == "호텔 정보":
     else:
         st.write("이미지 없음")
 
-  # ---------------- ② 주변 관광지 Top5 (숙박 제외) ----------------
-st.markdown("### 주변 관광지 Top 5")
+    # ---------------- ② 주변 관광지 Top5 (숙박 제외) ----------------
+    st.markdown("### 주변 관광지 Top 5")
 
-# contenttypeid = type
-# 80 = 다른 숙박지 → 제외
-tourist_df_filtered = tourist_df[tourist_df["type"] != 80]
+    tourist_df_filtered = tourist_df[tourist_df["type"] != 80]
 
-# 거리 계산
-tourist_df_filtered["dist"] = np.sqrt(
-    (tourist_df_filtered["lat"] - hotel_info["lat"])**2 +
-    (tourist_df_filtered["lng"] - hotel_info["lng"])**2
-)
+    tourist_df_filtered["dist"] = np.sqrt(
+        (tourist_df_filtered["lat"] - hotel_info["lat"])**2 +
+        (tourist_df_filtered["lng"] - hotel_info["lng"])**2
+    )
 
-top5 = tourist_df_filtered.sort_values("dist").head(5)
+    top5 = tourist_df_filtered.sort_values("dist").head(5)
 
-# 출력
-for _, row in top5.iterrows():
-    st.write(f"- **{row['name']}** ({row['type_name']})")
+    for _, row in top5.iterrows():
+        st.write(f"- **{row['name']}** ({row['type_name']})")
 
     # ---------------- ③ 리뷰 요약 ----------------
     st.markdown("### ⭐ 호텔 리뷰 요약")
-
-    # 예시: Google 리뷰 가정(나중에 실제 API 연결 가능)
     dummy_reviews = [
         "Good location and very clean rooms",
         "Bad smell in the hallway",
         "Very friendly staff and good breakfast",
         "Room was a bit dirty but overall fine"
     ]
-
     summary = summarize_reviews(dummy_reviews)
     st.info(summary)
 
