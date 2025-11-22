@@ -123,7 +123,7 @@ folium.Marker(
 
 
 # 관광지 마커 표시
-for i, row in tour_df.iterrows():
+for i, row in tourist_df.iterrows():
     highlight = (i == selected_idx)
 
     folium.CircleMarker(
