@@ -128,7 +128,8 @@ if page == "호텔 정보":
     # 관광지 타입별 수 정리
     st.markdown("### 관광지 타입별 수")
     type_counts = tourist_df["type_name"].value_counts().rename_axis("관광지 타입").reset_index(name="개수")
-    st.table(type_counts)
+    st.dataframe(type_counts, use_container_width=True)  # 인덱스 번호 없음
+
     
     # 호텔 이미지
     st.markdown("### 📷 호텔 이미지")
@@ -227,17 +228,19 @@ elif page == "관광지 보기":
         # 범례
         legend_html = """
         <div style="
-            position: fixed;
-            top: 80px;
+            position: absolute;
+            top: 50px;
             right: 10px;
-            width: 180px;
+            width: 220px;
             background-color: white;
             border:2px solid grey;
             z-index:9999;
-            font-size:14px;
-            padding: 10px;
+            font-size:16px;
+            padding: 15px;
             box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-        "><b>[관광지 범례]</b><br>"""
+        ">
+        <b>[관광지 범례]</b><br>
+        """
         for t_type, color in TYPE_COLORS.items():
             icon = TYPE_ICONS.get(t_type, "info-sign")
             name = TYPE_NAMES.get(t_type, "")
@@ -245,6 +248,7 @@ elif page == "관광지 보기":
         legend_html += """<i class="fa fa-star" style="color:yellow; margin-right:5px;"></i> 선택 관광지<br>"""
         legend_html += """<i class="fa fa-hotel" style="color:red; margin-right:5px;"></i> 호텔<br></div>"""
         m.get_root().html.add_child(folium.Element(legend_html))
+
         
         st_folium(m, width=700, height=550)
 
@@ -256,8 +260,9 @@ elif page == "관광지 보기":
             temp = group[["name","lat","lng"]].copy()
             temp["관광지 타입"] = t_type
             temp["구글 지도"] = temp.apply(
-                lambda x: f'<a href="https://www.google.com/maps/search/?api=1&query={x["lat"]},{x["lng"]}" target="_blank">지도 보기</a>', axis=1
+                lambda x: f'<a href="https://www.google.com/maps/search/{x["name"].replace(" ","+")}" target="_blank">지도 보기</a>', axis=1
             )
+
             df_list.append(temp[["관광지 타입","name","구글 지도"]])
         final_df = pd.concat(df_list, ignore_index=True)
         final_df = final_df.rename(columns={"name":"관광지명"})
