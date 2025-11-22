@@ -148,7 +148,7 @@ if page == "호텔 정보":
 
     # 예약 링크
     booking_url = f"https://www.booking.com/searchresults.ko.html?ss={hotel_info['name'].replace(' ', '+')}"
-    st.markdown(f"\n[👉 '{hotel_info['name']}' 예약하러 가기]({booking_url})")
+    st.markdown(f"\n\n\n[👉 '{hotel_info['name']}' 예약하러 가기]({booking_url})")
 
 # ---------- 관광지 보기 페이지 -----------
 elif page == "관광지 보기":
