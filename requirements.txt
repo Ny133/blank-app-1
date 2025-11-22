@@ -6,3 +6,6 @@ streamlit-folium
 haversine
 plotly
 numpy
+seaborn
+matplotlib.pyplot
+statsmodels.api
