@@ -18,7 +18,7 @@ radius_m = st.slider("관광지 반경 (m)", 500, 2000, 1000, step=100)
 # -------------------
 @st.cache_data(ttl=3600)
 def get_hotels(api_key):
-    url = "http://apis.data.go.kr/B551011/KorService2/searchStay2"
+    url = "http://apis.data.go.kr/B551011/EngService2/searchStay2"
     params = {
         "ServiceKey": api_key,
         "numOfRows": 50,
@@ -58,7 +58,7 @@ hotel_info = hotels_df[hotels_df['name']==selected_hotel].iloc[0]
 # -------------------
 @st.cache_data(ttl=3600)
 def get_tourist_list(api_key, lat, lng, radius_m):
-    url = "http://apis.data.go.kr/B551011/KorService2/locationBasedList2"
+    url = "http://apis.data.go.kr/B551011/EngService2/locationBasedList2"
     params = {
         "ServiceKey": api_key,
         "numOfRows": 50,
