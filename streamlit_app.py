@@ -32,7 +32,7 @@ SIGUNGU_MAP = {
     16: "강서구", 17: "구로구", 18: "금천구", 19: "영등포구", 20: "동작구",
     21: "관악구", 22: "서초구", 23: "강남구", 24: "송파구", 25: "강동구"
 }
-AREA_MAP = {1: "서울특별시"}  # 서울만 예시
+
 
 # ------------------ 호텔 데이터 ------------------
 @st.cache_data(ttl=3600)
@@ -125,13 +125,11 @@ if page == "호텔 정보":
 
     # 시군구/지역 표시
     sigungucode = hotel_info.get("sigungucode")
-    area_code = hotel_info.get("areaCode")
     sigunguname = SIGUNGU_MAP.get(int(sigungucode), "정보 없음") if sigungucode else "정보 없음"
-    areaname = AREA_MAP.get(int(area_code), "정보 없음") if area_code else "정보 없음"
 
     st.markdown(f"""
     **호텔명:** {hotel_info['name']}  
-    **지역:** {areaname} {sigunguname}  
+    **지역:** {sigunguname}  
     **평균 가격:** {hotel_info['price']:,}원  
     **평점:** ⭐ {hotel_info['rating']}  
     """)
