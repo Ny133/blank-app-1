@@ -322,45 +322,45 @@ elif page == "호텔 비교 분석":
     selected_hotel_row = hotels_df[hotels_df["name"] == selected_hotel].copy()
     selected_idx = selected_hotel_row.index[0]
 
+    # 선택 호텔 정보 위에 평균만 표시
     st.markdown(f"""
-**선택 호텔:** {selected_hotel_row.loc[selected_idx, 'name']}  
-**평점:** {selected_hotel_row.loc[selected_idx, 'rating']}  
-**가격:** {selected_hotel_row.loc[selected_idx, 'price']:,}원  
-**주변 관광지 수:** {selected_hotel_row.loc[selected_idx, 'tourist_count']}
+**Selected Hotel:** {selected_hotel_row.loc[selected_idx, 'name']}  
+**Rating:** {selected_hotel_row.loc[selected_idx, 'rating']}  
+**Price:** {selected_hotel_row.loc[selected_idx, 'price']:,}  
+**Nearby Attractions:** {selected_hotel_row.loc[selected_idx, 'tourist_count']}
 """)
 
-    # ---------------- 범주별 통계 ----------------
-    st.markdown("### 호텔 데이터 범주별 통계")
-    st.write("평점 통계")
-    st.write(hotels_df["rating"].describe())
-    st.write("주변 관광지 수 통계")
-    st.write(hotels_df["tourist_count"].describe())
-    st.write("가격 통계")
-    st.write(hotels_df["price"].describe())
-
-    # ---------------- 시각화 ----------------
+    # ---------------- 시각화 (영문/숫자만) ----------------
     fig, axes = plt.subplots(1, 3, figsize=(18,5))
 
-    # 1) 호텔 평점 분포
+    # 1) Rating distribution
     sns.histplot(hotels_df["rating"], bins=10, kde=True, ax=axes[0], color='skyblue')
     axes[0].axvline(selected_hotel_row.loc[selected_idx, "rating"], color='red', linestyle='--')
-    axes[0].set_title("호텔 평점 분포")
-    axes[0].set_xlabel("평점")
-    axes[0].set_ylabel("호텔 수")
+    axes[0].set_title("Rating Distribution")
+    axes[0].set_xlabel("Rating")
+    axes[0].set_ylabel("Hotel Count")
 
-    # 2) 주변 관광지 수 분포
+    # 2) Nearby attractions count distribution
     sns.histplot(hotels_df["tourist_count"], bins=10, kde=True, ax=axes[1], color='lightgreen')
     axes[1].axvline(selected_hotel_row.loc[selected_idx, "tourist_count"], color='red', linestyle='--')
-    axes[1].set_title("주변 관광지 수 분포")
-    axes[1].set_xlabel("주변 관광지 수")
-    axes[1].set_ylabel("호텔 수")
+    axes[1].set_title("Nearby Attractions Distribution")
+    axes[1].set_xlabel("Attractions Count")
+    axes[1].set_ylabel("Hotel Count")
 
-    # 3) 호텔 가격 분포
+    # 3) Price distribution
     sns.histplot(hotels_df["price"], bins=10, kde=True, ax=axes[2], color='lightcoral')
     axes[2].axvline(selected_hotel_row.loc[selected_idx, "price"], color='red', linestyle='--')
-    axes[2].set_title("호텔 가격 분포")
-    axes[2].set_xlabel("가격(원)")
-    axes[2].set_ylabel("호텔 수")
+    axes[2].set_title("Price Distribution")
+    axes[2].set_xlabel("Price")
+    axes[2].set_ylabel("Hotel Count")
 
     st.pyplot(fig)
 
+    # ---------------- 범주 통계 (맨 아래) ----------------
+    st.markdown("### Overall Hotel Statistics")
+    st.write("Rating statistics:")
+    st.write(hotels_df["rating"].describe())
+    st.write("Nearby attractions statistics:")
+    st.write(hotels_df["tourist_count"].describe())
+    st.write("Price statistics:")
+    st.write(hotels_df["price"].describe())
