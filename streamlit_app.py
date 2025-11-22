@@ -235,30 +235,34 @@ elif page == "관광지 보기":
         st_folium(m, width=700, height=550)
 
     with col2:
-        st.markdown("### 관광지 범례")
-    
-        legend_html = """<div style="
+        # --------- 범례 ---------
+        legend_html = """
+        <div style="
             background-color: white;
             border:2px solid grey;
             padding: 10px;
             border-radius: 5px;
             box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
             font-size: 16px;
-            text-align: left;  /* 왼쪽 정렬, 가운데로 하고싶으면 center */
-        ">"""
-        legend_html += "<b>[관광지 범례]</b><br>"
+        ">
+        <b>[관광지 범례]</b><br>
+        """
     
+        # 관광지 타입별 아이콘 + 색상
         for t_type, color in TYPE_COLORS.items():
             icon = TYPE_ICONS.get(t_type, "info-sign")
             name = TYPE_NAMES.get(t_type, "")
             legend_html += f'<i class="fa fa-{icon}" style="color:{color}; margin-right:5px;"></i> {name} <br>'
     
+        # 선택 관광지 / 호텔
         legend_html += '<i class="fa fa-star" style="color:yellow; margin-right:5px;"></i> 선택 관광지<br>'
         legend_html += '<i class="fa fa-hotel" style="color:red; margin-right:5px;"></i> 호텔<br>'
+    
         legend_html += "</div>"
     
         st.markdown(legend_html, unsafe_allow_html=True)
     
+        
 
 
 
