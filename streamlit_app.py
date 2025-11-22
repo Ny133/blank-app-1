@@ -112,11 +112,11 @@ selected_spot = st.selectbox("📌 지도에서 강조할 관광지 선택", ["(
 # ------------------ 지도 생성 ------------------ #
 m = folium.Map(location=[hotel_info["lat"], hotel_info["lng"]], zoom_start=15)
 
-# 호텔 강조
+# 호텔 마커
 folium.Marker(
     location=[hotel_info['lat'], hotel_info['lng']],
-    popup=f"<b>{hotel_info['name']}</b><br>가격: {hotel_info['price']}<br>별점: {hotel_info['rating']}",
-    icon=folium.Icon(color='red', icon='star', prefix='fa')
+    popup=f"{hotel_info['name']} | 가격: {hotel_info['price']} | 별점: {hotel_info['rating']}",
+    icon=folium.Icon(color='red', icon='hotel', prefix='fa')
 ).add_to(m)
 
 
