@@ -177,7 +177,7 @@ for _, row in tourist_df.iterrows():
     popup=f"{row['name']} ({row['type_name']})",
     icon=BeautifyIcon(
         icon=icon_name,
-        icon_shape="marker",
+        icon_shape="circle",
         border_color=row["color"],
         text_color="white",
         background_color=row["color"],
