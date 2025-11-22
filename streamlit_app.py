@@ -114,44 +114,34 @@ selected_spot = st.selectbox("📌 지도에서 강조할 관광지 선택", ["(
 # ------------------ 지도 생성 ------------------ #
 m = folium.Map(location=[hotel_info["lat"], hotel_info["lng"]], zoom_start=15)
 
-# ⭐ 호텔은 더 큰 별 모양으로 강조 ⭐
+# 호텔 강조
 folium.Marker(
-    location=[hotel_info["lat"], hotel_info["lng"]],
-    popup=f"<b>{hotel_info['name']}</b><br>가격: {hotel_info['price']}원<br>평점: {hotel_info['rating']}",
-    icon=folium.Icon(color="red", icon="star", prefix="fa")
+    location=[hotel_info['lat'], hotel_info['lng']],
+    popup=f"<b>{hotel_info['name']}</b><br>가격: {hotel_info['price']}<br>별점: {hotel_info['rating']}",
+    icon=folium.Icon(color='red', icon='star', prefix='fa')
 ).add_to(m)
 
-# 관광지 마커 표시
-for _, row in tourist_df.iterrows():
-    icon_color = TYPE_COLORS.get(row["type"], "black")
+# 관광지 색상 매핑
+color_map = {
+    "레포츠":"green","관광지":"blue","교통":"gray",
+    "문화시설":"purple","쇼핑":"orange",
+    "숙박":"darkred","음식점":"pink","축제/공연/행사":"cadetblue"
+}
 
-    # 선택된 관광지는 강조 (노란색 + 크기 확대)
-    if row["name"] == selected_spot:
-        folium.Marker(
-            location=[row["lat"], row["lng"]],
-            popup=row["name"],
-            icon=folium.Icon(color="lightgray", icon="info-sign")
-        ).add_to(m)
-        folium.CircleMarker(
-            location=[row["lat"], row["lng"]],
-            radius=10,
-            color="yellow",
-            fill=True,
-            fill_color="yellow",
-            fill_opacity=0.7
-        ).add_to(m)
-    else:
-        folium.Marker(
-            location=[row["lat"], row["lng"]],
-            popup=row["name"],
-            icon=folium.Icon(color=icon_color, icon="info-sign")
-        ).add_to(m)
-
-st.subheader(f"{selected_hotel} 주변 관광지 지도")
-st_folium(m, width=700, height=500)
+for i, row in tour_df.iterrows():
+    highlight = (spot_info is not None) and (row['title']==spot_info['title'])
+    folium.CircleMarker(
+        location=[row['lat'], row['lng']],
+        radius=10 if highlight else 5,
+        color="yellow" if highlight else color_map.get(row['type_name'],"blue"),
+        fill=True,
+        fill_color="yellow" if highlight else color_map.get(row['type_name'],"blue"),
+        fill_opacity=0.7 if not highlight else 1,
+        popup=f"{row['title']} ({row['type_name']})"
+    ).add_to(m)
 
 # ------------------ 예쁜 표로 목록 출력 ------------------ #
-st.subheader("📋 관광지 목록(분류 포함)")
+st.subheader("📋 관광지 목록")
 
 st.dataframe(
     tourist_df[["name", "type_name", "lat", "lng"]],
