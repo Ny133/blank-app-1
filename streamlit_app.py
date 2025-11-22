@@ -42,6 +42,15 @@ hotels_df = get_hotels(api_key)
 selected_hotel = st.selectbox("호텔 선택", hotels_df["name"])
 hotel_info = hotels_df[hotels_df["name"]==selected_hotel].iloc[0]
 
+# 호텔 정보 표시
+st.subheader("🏨 선택 호텔 정보")
+st.markdown(f"""
+**호텔명:** {hotel_info['name']}  
+**가격:** {hotel_info['price']}원  
+**평점:** {hotel_info['rating']}  
+**위도/경도:** {hotel_info['lat']}, {hotel_info['lng']}
+""")
+
 # ------------------ 관광지 데이터 ------------------
 @st.cache_data(ttl=3600)
 def get_tourist_list(api_key, lat, lng, radius_m):
