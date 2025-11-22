@@ -313,53 +313,51 @@ elif page == "관광지 보기":
 elif page == "호텔 비교 분석":
     st.subheader("📊 선택 호텔과 전체 서울 호텔 비교")
 
-    # 한글 깨짐 방지
+    # ---------------- 한글 깨짐 방지 ----------------
     plt.rcParams['font.family'] = 'Malgun Gothic'
+    plt.rcParams['axes.unicode_minus'] = False
+    sns.set(font='Malgun Gothic', rc={'axes.unicode_minus':False})
 
-    # 1) 전체 호텔 주변 관광지 수 계산
-    # 실제 관광지 데이터를 호텔별로 합쳐서 사용 가능
-    # 여기서는 예시로 랜덤값 생성
+    # ---------------- 데이터 준비 ----------------
     if "tourist_count" not in hotels_df.columns:
         hotels_df["tourist_count"] = np.random.randint(5, 20, size=len(hotels_df))
 
-    # 선택한 호텔 주변 관광지 수도 hotels_df에 맞춰 가져오기
+    # 선택 호텔 인덱스
     selected_lat, selected_lng = hotel_info["lat"], hotel_info["lng"]
     selected_idx = hotels_df[(hotels_df["lat"]==selected_lat) & (hotels_df["lng"]==selected_lng)].index
-    hotels_df.loc[selected_idx, "tourist_count"] = np.random.randint(5, 20)  # 실제 계산값 넣으면 됨
 
-    # 2) 독립변수(X)와 종속변수(Y)
-    X = hotels_df[["tourist_count", "rating"]]
-    Y = hotels_df["price"]
+    # 선택 호텔 주변 관광지 수 임의 생성 (실제 데이터 있으면 계산)
+    hotels_df.loc[selected_idx, "tourist_count"] = np.random.randint(5, 20)
 
-    # 3) statsmodels 회귀분석
-    X_const = sm.add_constant(X)
-    model = sm.OLS(Y, X_const).fit()
+    # ---------------- 시각화 ----------------
+    fig, axes = plt.subplots(1, 3, figsize=(18,5))
 
-    st.markdown("### 회귀분석 결과")
-    st.text(model.summary())
-
-    # 4) 시각화 - 전체 호텔 + 선택 호텔 강조
-    fig, axes = plt.subplots(1, 2, figsize=(12,5))
-
-    # 4-1) 주변 관광지 수 vs 가격
-    sns.scatterplot(x="tourist_count", y="price", data=hotels_df, ax=axes[0], color='skyblue', label="전체 호텔")
-    sns.scatterplot(x=hotels_df.loc[selected_idx, "tourist_count"],
-                    y=hotels_df.loc[selected_idx, "price"],
-                    ax=axes[0], color='red', s=100, label=f"선택 호텔: {hotel_info['name']}")
-    axes[0].set_title("주변 관광지 수 vs 호텔 가격")
-    axes[0].set_xlabel("주변 관광지 수")
-    axes[0].set_ylabel("가격(원)")
+    # 1) 호텔 평점 분포
+    sns.histplot(hotels_df["rating"], bins=10, kde=True, ax=axes[0], color='skyblue')
+    axes[0].axvline(hotels_df.loc[selected_idx, "rating"].values[0], color='red', linestyle='--',
+                    label=f"선택 호텔: {hotel_info['name']}")
+    axes[0].set_title("호텔 평점 분포")
+    axes[0].set_xlabel("평점")
+    axes[0].set_ylabel("호텔 수")
     axes[0].legend()
 
-    # 4-2) 평점 vs 가격
-    sns.scatterplot(x="rating", y="price", data=hotels_df, ax=axes[1], color='skyblue', label="전체 호텔")
-    sns.scatterplot(x=hotels_df.loc[selected_idx, "rating"],
-                    y=hotels_df.loc[selected_idx, "price"],
-                    ax=axes[1], color='red', s=100, label=f"선택 호텔: {hotel_info['name']}")
-    axes[1].set_title("평점 vs 호텔 가격")
-    axes[1].set_xlabel("평점")
-    axes[1].set_ylabel("가격(원)")
+    # 2) 주변 관광지 수 분포
+    sns.histplot(hotels_df["tourist_count"], bins=10, kde=True, ax=axes[1], color='lightgreen')
+    axes[1].axvline(hotels_df.loc[selected_idx, "tourist_count"].values[0], color='red', linestyle='--',
+                    label=f"선택 호텔: {hotel_info['name']}")
+    axes[1].set_title("주변 관광지 수 분포")
+    axes[1].set_xlabel("주변 관광지 수")
+    axes[1].set_ylabel("호텔 수")
     axes[1].legend()
+
+    # 3) 호텔 가격 분포
+    sns.histplot(hotels_df["price"], bins=10, kde=True, ax=axes[2], color='lightcoral')
+    axes[2].axvline(hotels_df.loc[selected_idx, "price"].values[0], color='red', linestyle='--',
+                    label=f"선택 호텔: {hotel_info['name']}")
+    axes[2].set_title("호텔 가격 분포")
+    axes[2].set_xlabel("가격(원)")
+    axes[2].set_ylabel("호텔 수")
+    axes[2].legend()
 
     st.pyplot(fig)
 
