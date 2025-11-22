@@ -7,5 +7,5 @@ haversine
 plotly
 numpy
 seaborn
-matplotlib.pyplot
-statsmodels.api
+matplotlib
+statsmodels
