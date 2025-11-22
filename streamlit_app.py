@@ -121,24 +121,20 @@ folium.Marker(
     icon=folium.Icon(color='red', icon='star', prefix='fa')
 ).add_to(m)
 
-# 관광지 색상 매핑
-color_map = {
-    "레포츠":"green","관광지":"blue","교통":"gray",
-    "문화시설":"purple","쇼핑":"orange",
-    "숙박":"darkred","음식점":"pink","축제/공연/행사":"cadetblue"
-}
 
+# 관광지 마커 표시
 for i, row in tour_df.iterrows():
-    highlight = (spot_info is not None) and (row['title']==spot_info['title'])
+    highlight = (i == selected_idx)
+
     folium.CircleMarker(
         location=[row['lat'], row['lng']],
-        radius=10 if highlight else 5,
-        color="yellow" if highlight else color_map.get(row['type_name'],"blue"),
+        radius=8 if highlight else 5,
+        color="yellow" if highlight else color_map.get(row['type_name'], "blue"),
         fill=True,
-        fill_color="yellow" if highlight else color_map.get(row['type_name'],"blue"),
-        fill_opacity=0.7 if not highlight else 1,
+        fill_opacity=1 if highlight else 0.7,
         popup=f"{row['title']} ({row['type_name']})"
     ).add_to(m)
+
 
 # ------------------ 예쁜 표로 목록 출력 ------------------ #
 st.subheader("📋 관광지 목록")
