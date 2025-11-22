@@ -161,19 +161,20 @@ for _, row in tourist_df.iterrows():
     else:
         # 일반 관광지: 조금 더 크게, 배경 흰색
         folium.Marker(
-            location=[row["lat"], row["lng"]],
-            popup=f"{row['name']} ({row['type_name']})",
-            icon=BeautifyIcon(
-                icon=icon_name,
-                icon_shape="marker",
-                border_color=row["color"],
-                text_color="white",
-                background_color=row["color"],
-                prefix="fa",
-                icon_size=[20, 20],  # 조금 키움
-                inner_icon_style="margin:0px;"
-            )
-        ).add_to(m)
+    location=[row["lat"], row["lng"]],
+    popup=f"{row['name']} ({row['type_name']})",
+    icon=BeautifyIcon(
+        icon=icon_name,
+        icon_shape="marker",
+        border_color=row["color"],
+        text_color="white",
+        background_color=row["color"],
+        prefix="fa",
+        icon_size=[20, 20],
+        inner_icon_style="font-size:12px; margin:0px;"  # 글자/아이콘 크기 조정
+    )
+).add_to(m)
+
 
 
 # 선택된 관광지가 있으면 지도 중심 이동
