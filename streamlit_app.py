@@ -117,18 +117,21 @@ for _, row in tourist_df.iterrows():
 
     if highlight:
         # 선택된 관광지: Marker + 아이콘 강조, 원 없음
-        folium.Marker(
-            location=[row["lat"], row["lng"]],
-            popup=f"{row['name']} ({row['type_name']})",
-            icon=BeautifyIcon(
-                icon="star",
-                icon_shape="marker",   # marker 모양
-                border_color="yellow",
-                text_color="white",
-                background_color="yellow",
-                prefix="fa"
-            )
-        ).add_to(m)
+       folium.Marker(
+    location=[row["lat"], row["lng"]],
+    popup=f"{row['name']} ({row['type_name']})",
+    icon=BeautifyIcon(
+        icon="star",
+        icon_shape="marker",
+        border_color="yellow",
+        text_color="white",
+        background_color="yellow",
+        prefix="fa",
+        icon_size=[25, 25],
+        inner_icon_style="margin:0px;"
+    )
+).add_to(m)
+
     else:
         # 일반 관광지는 기존 CircleMarker 유지
         folium.CircleMarker(
