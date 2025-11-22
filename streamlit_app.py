@@ -113,25 +113,11 @@ from folium.plugins import BeautifyIcon
 
 # 호텔 강조 (크기 40x40)
 folium.Marker(
-    location=[hotel_info["lat"], hotel_info["lng"]],
-    popup=f"<b>{hotel_info['name']}</b><br>가격: {hotel_info['price']}<br>평점: {hotel_info['rating']}",
-    icon=BeautifyIcon(
-        icon="home",           # 호텔 아이콘
-        icon_shape="marker",
-        border_color="red",
-        text_color="white",
-        background_color="red",
-        prefix="fa",
-        icon_size=[40, 40],
-        inner_icon_style="""
-            font-size:20px;
-            line-height:25px;
-            text-align:center;
-            vertical-align:middle;
-            margin:0px;
-        """
-    )
+    location=[hotel_info['lat'], hotel_info['lng']],
+    popup=f"{hotel_info['name']} | 가격: {hotel_info['price']} | 별점: {hotel_info['rating']}",
+    icon=folium.Icon(color='red', icon='hotel', prefix='fa')
 ).add_to(m)
+
 
 
 from folium.plugins import BeautifyIcon
